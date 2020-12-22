@@ -1,0 +1,17 @@
+[package]
+name = "sd-journal"
+version = "0.1.0"
+authors = ["ente <ente@ck76.de>"]
+edition = "2018"
+license = "GPL-3.0-or-later"
+keywords = ["systemd", "journald", "sd-journal", "journal", "sdjournal"]
+#category = ["os::linux-apis", "api-bindings"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sd-id128 = {path = "../sd-id128"}
+sd-sys = {path = "../sd-sys"}
+libc = "^0.2"
+chrono = "0.4"
+
