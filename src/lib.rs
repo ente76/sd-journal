@@ -1425,9 +1425,9 @@ impl Journal {
     ///
     /// # Examples
     /// ```
-    /// use sd_journal::*;
-    /// let journal = open_testdata();
-    /// journal.next().unwrap();
+    /// # use sd_journal::*;
+    /// let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
+    /// # journal.next().unwrap();
     /// // The following 2 loops are synonyms
     /// while let Ok(Enumeration::Value((field, value))) = journal.enumerate_fields() {
     ///     println!("{}: {}", field, value);
