@@ -1,7 +1,8 @@
-use std::ffi::CString;
-
 use chrono::Duration;
-use sd_journal::{CursorMovement, Journal};
+use sd_id128::*;
+use sd_journal::*;
+use std::{ffi::CString,
+          path::{Path, PathBuf}};
 
 // testing on sd-journal
 // Copyright (C) 2020 Christian Klaue ente@ck76.de
@@ -20,8 +21,6 @@ use sd_journal::{CursorMovement, Journal};
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 fn open_testdata() -> sd_journal::Journal {
-    use sd_journal::*;
-    use std::path::PathBuf;
     let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     test_data.push("test-data/");
     println!("looking for test data in folder {}", test_data.display());
@@ -31,8 +30,6 @@ fn open_testdata() -> sd_journal::Journal {
 #[test]
 fn log_message() {
     // send various different "Hello World!" to Journal
-    use sd_journal::*;
-    use std::ffi::CString;
     // the following lines are all synonyms
     Journal::log_message(Level::Info, "Hello World!").unwrap();
     Journal::log_message(Level::Info, String::from("Hello World!").as_str()).unwrap();
@@ -43,7 +40,6 @@ fn log_message() {
 #[test]
 fn log_raw_record() {
     // send various different "Hello World!" to Journal
-    use sd_journal::*;
     // the first two lines are synonyms
     Journal::log_message(Level::Info, "Hello World!").unwrap();
     Journal::log_raw_record(&["PRIORITY=6", "MESSAGE=Hello World!"]).unwrap();
@@ -66,7 +62,6 @@ fn get_catalog_for_message_id() {
     // find the very first message with a catalog entry and print it.
     // if no such message is found: successful anyway
     // TODO: find a better and more meaningful test
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     loop {
         match journal.next() {
@@ -74,7 +69,6 @@ fn get_catalog_for_message_id() {
             Ok(_) => (),
             Err(_) => break
         }
-
         let id = match journal.get_data("MESSAGE_ID") {
             Err(_) => continue,
             Ok(value) => value
@@ -93,7 +87,6 @@ fn get_catalog_for_message_id() {
 #[test]
 fn open() {
     // Open the local system journal using various flags
-    use sd_journal::*;
     Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     Journal::open(FileFlags::LocalOnly, UserFlags::CurrentUserOnly).unwrap();
     Journal::open(FileFlags::RuntimeOnly, UserFlags::CurrentUserAndSystemOnly).unwrap();
@@ -105,7 +98,6 @@ fn open() {
 #[test]
 fn open_namespace() {
     // Open the journal for a namespace including the default namespace
-    use sd_journal::*;
     Journal::open_namespace("namespace",
                             NamespaceFlags::DefaultNamespaceIncluded,
                             FileFlags::LocalOnly,
@@ -121,15 +113,12 @@ fn open_namespace() {
 #[test]
 fn open_all_namespaces() {
     // open the journal for all namespaces
-    use sd_journal::*;
     let journal = Journal::open_all_namespaces(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     assert_eq!(journal.next().unwrap(), CursorMovement::Done);
 }
 
 #[test]
 fn open_directory() {
-    use sd_journal::*;
-    use std::path::{Path, PathBuf};
     // open the system journal by pointing to root with path flags set to
     // PathToOSRoot
     Journal::open_directory("/", PathFlags::PathToOSRoot, UserFlags::AllUsers).unwrap();
@@ -149,8 +138,6 @@ fn open_directory() {
 
 #[test]
 fn open_files() {
-    use sd_journal::*;
-    use std::path::PathBuf;
     // open the curreńt system.journal file in the default location for journals
     // /var/log/journal/<MACHINE-ID>/system.journal
     let machine_id = sd_id128::ID128::machine_id().unwrap()
@@ -173,8 +160,6 @@ fn open_files() {
 
 #[test]
 fn next() {
-    use sd_journal::*;
-    use std::path::PathBuf;
     let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     test_data.push("test-data/");
     println!("looking for test data in folder {}", test_data.display());
@@ -185,7 +170,6 @@ fn next() {
         // do something on each cursor, e.g. print the MESSAGE
         println!("{}", journal.get_data("MESSAGE").unwrap());
     }
-
     // do a next() after seek_tail() to hit an EoF
     journal.seek_tail().unwrap();
     // there is a [defect in libsystemd](https://github.com/systemd/systemd/issues/17662)
@@ -197,8 +181,6 @@ fn next() {
 
 #[test]
 fn iter() {
-    use sd_journal::*;
-    use std::path::PathBuf;
     let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     test_data.push("test-data/");
     println!("looking for test data in folder {}", test_data.display());
@@ -222,8 +204,6 @@ fn iter() {
 
 #[test]
 fn previous() {
-    use sd_journal::*;
-    use std::path::PathBuf;
     let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     test_data.push("test-data/");
     println!("looking for test data in folder {}", test_data.display());
@@ -247,8 +227,6 @@ fn previous() {
 
 #[test]
 fn iter_reverse() {
-    use sd_journal::*;
-    use std::path::PathBuf;
     let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     test_data.push("test-data/");
     println!("looking for test data in folder {}", test_data.display());
@@ -274,7 +252,6 @@ fn iter_reverse() {
 #[test]
 fn next_skip() {
     // do a next_skip(10) and result in a Limited(5)
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.seek_tail().unwrap();
     // there is a [defect in libsystemd](https://github.com/systemd/systemd/issues/17662)
@@ -288,7 +265,6 @@ fn next_skip() {
 #[test]
 fn previous_skip() {
     // do a previous_skip(10) and result in a Limited(5)
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.seek_head().unwrap();
     // there is a [defect in libsystemd](https://github.com/systemd/systemd/issues/17662)
@@ -303,7 +279,6 @@ fn previous_skip() {
 #[test]
 fn seek_head() {
     // seek_head --> next() --> previous() --> EoF
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.seek_head().unwrap();
     // seek_head() should be followed by a next() before any previous() --> issues
@@ -315,7 +290,6 @@ fn seek_head() {
 #[test]
 fn seek_tail() {
     // seek_tail --> previous() --> next() --> EoF
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.seek_tail().unwrap();
     // seek_head() should be followed by a previous() before any next() --> issues
@@ -328,8 +302,6 @@ fn seek_tail() {
 fn seek_monotonic() {
     // get monotonic cutoff of current boot id --> seek to start +5 and do a
     // previous() then get the monotonic time ==> should be equal to start
-    use sd_id128::*;
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     let boot_id = ID128::boot_id().unwrap();
     let (from, _) = journal.get_monotonic_cutoff(boot_id.clone()).unwrap();
@@ -342,7 +314,6 @@ fn seek_monotonic() {
 
 #[test]
 fn seek_realtime() {
-    use sd_journal::*;
     // get current realtime now
     // seek_realtime(now) + previous ==> last_entry
     // clock of last_entry should be < now
@@ -379,7 +350,6 @@ fn seek_realtime() {
 
 #[test]
 fn seek_cursor_id() {
-    use sd_journal::*;
     // go to 10 items before end --> get cursor
     // go to head
     // seek_cursor(cursor)
@@ -407,7 +377,6 @@ fn seek_cursor_id() {
 fn add_match() {
     // add a match for "MESSAGE=Hello World!" should succeed while a match for
     // "MESSAGE=Hello Woooooorld!" should not return any matches
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.add_match("MESSAGE=Hello World!").unwrap();
     assert_eq!(journal.next().unwrap(), CursorMovement::Done);
@@ -468,7 +437,6 @@ fn get_realtime_cutoff() {
 fn get_cutoff_monotonic() {
     // get current boot id
     // get monotonic cutoff --> from < to
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     let (from, to) = journal.get_monotonic_cutoff(sd_id128::ID128::boot_id().unwrap())
                             .unwrap();
@@ -479,7 +447,6 @@ fn get_cutoff_monotonic() {
 #[test]
 fn set_treshold() {
     // set the treshold without error
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.set_data_treshold(5).unwrap();
 }
@@ -491,7 +458,6 @@ fn get_treshold() {
     // assert the new value of 5 differs from the old value (very unlikely to match)
     // set the treshold to 0 (unlimited)
     // assert the value is not 0
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     let old = journal.get_data_treshold().unwrap();
     println!("old value: {}", old);
@@ -509,7 +475,6 @@ fn get_treshold() {
 #[test]
 fn enumerate_field_names() {
     // loop once through all fields an print them assuming no error is raised ever
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     loop {
         match journal.enumerate_field_names().unwrap() {
@@ -525,7 +490,6 @@ fn restart_fields() {
     // restart
     // enumerate again until "MESSAGE" is found
     // any error or "MESSAGE" is not found lead to an error
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     loop {
         match journal.enumerate_field_names().unwrap() {
@@ -558,7 +522,6 @@ fn restart_fields() {
 #[test]
 fn iter_field_names() {
     // loop once through all fields an print them assuming no error is raised ever
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     for fieldname in journal.iter_field_names() {
         println!("{}", fieldname.unwrap());
@@ -568,7 +531,6 @@ fn iter_field_names() {
 #[test]
 fn get_fd() {
     // TODO: do a more meaningful test: open the fd for reading
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.get_fd().unwrap();
 }
@@ -576,7 +538,6 @@ fn get_fd() {
 #[test]
 fn get_events() {
     // TODO: do a more meaningful test: open the fd for reading
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.get_events().unwrap();
 }
@@ -584,7 +545,6 @@ fn get_events() {
 #[test]
 fn get_timeout() {
     // TODO: do a more meaningful test: poll the fd and measure the timeout
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.get_timeout().unwrap();
 }
@@ -593,7 +553,6 @@ fn get_timeout() {
 fn process() {
     // TODO: do a test at all... calling process without a wait seems to return
     // random numbers
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.process().unwrap();
 }
@@ -601,7 +560,6 @@ fn process() {
 #[test]
 fn wait() {
     // TODO: do a more meaningful test: the journal always returns INVALIDATE???
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.seek_tail().unwrap();
     journal.wait(10).unwrap();
@@ -609,21 +567,18 @@ fn wait() {
 
 #[test]
 fn has_runtime_files() {
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.has_runtime_files().unwrap();
 }
 
 #[test]
 fn has_persistent_files() {
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.has_persistent_files().unwrap();
 }
 
 #[test]
 fn get_usage() {
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     println!("usage in bytes: {}", journal.get_usage().unwrap());
     assert!(journal.get_usage().unwrap() > 0);
@@ -660,7 +615,6 @@ fn get_monotonic() {
 #[test]
 fn get_cursor_id() {
     // get cursor and print it
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.next().unwrap();
     println!("{:?}", journal.get_cursor_id().unwrap());
@@ -670,7 +624,6 @@ fn get_cursor_id() {
 fn cursor_id_matches() {
     // get cursor -> test_cursor matches on same position
     // next() -> test_cursor does not match anymore
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.next().unwrap();
     let cursor = journal.get_cursor_id().unwrap();
@@ -685,7 +638,6 @@ fn get_catalog() {
     // iterate over records until you find "MESSAGE_ID"
     // get catalog for message
     // go to next without "MESSAGE_ID" --> get_catalogue returns an error
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.next().unwrap();
     // while journal.get_data("MESSAGE_ID").is_err() {
@@ -709,8 +661,6 @@ fn get_catalog() {
 fn get_data() {
     // get data for field "MESSAGE" and check the result actually contains
     // "MESSAGE="
-    use sd_journal::*;
-    use std::path::PathBuf;
     let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     test_data.push("test-data/");
     println!("looking for test data in folder {}", test_data.display());
@@ -728,7 +678,6 @@ fn get_data() {
 #[test]
 fn enumerate_fields() {
     // loop through all fields of a record and print them
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.next().unwrap();
     while let Ok(Enumeration::Value((field, value))) = journal.enumerate_fields() {
@@ -739,7 +688,6 @@ fn enumerate_fields() {
 #[test]
 fn enumerate_available_fields() {
     // loop through all fields of a record and print them
-    use sd_journal::*;
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.next().unwrap();
     while let Ok(Enumeration::Value((field, value))) = journal.enumerate_available_fields() {
@@ -755,7 +703,6 @@ fn restart_fields_enumeration() {
     // test fails on:
     // - no field MESSAGE ever found (first & second loop exit without match)
     // - restart_data() fails, i.e. second loop does not find "MESSAGE" once more
-    use sd_journal::*;
     let journal = open_testdata();
     journal.next().unwrap();
     while let Ok(Enumeration::Value((field, value))) = journal.enumerate_fields() {
@@ -776,7 +723,6 @@ fn restart_fields_enumeration() {
 
 #[test]
 fn iter_fields() {
-    use sd_journal::*;
     let journal = open_testdata();
     journal.next().unwrap();
     // The following 2 loops are synonyms
