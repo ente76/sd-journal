@@ -1499,11 +1499,16 @@ impl Journal {
         if result == 0 {
             return Ok(Enumeration::EoF);
         }
-        Ok(Enumeration::Value(unsafe {
+        let result = unsafe {
             CStr::from_ptr(data as *const c_char).to_str()
                                                  .map_err(Error::UTF8Error)?
-                                                 .to_owned()
-        }))
+        };
+        let index = match result.find('=') {
+            None => Err(Error::UnexpectedDataFormat)?,
+            Some(index) => index
+        };
+        let (_, result) = result.split_at(index + 1);
+        Ok(Enumeration::Value(result.to_owned()))
     }
 
     /// Restart enumeration of unique values (implements

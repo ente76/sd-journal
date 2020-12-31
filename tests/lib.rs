@@ -744,7 +744,7 @@ fn query_unique_values() {
 }
 
 #[test]
-fn enumerate_unique() {
+fn enumerate_unique_values() {
     // query MESSAGE field 3 times and assert each result differs
     let journal = open_testdata();
     journal.query_unique_values(&CString::new("MESSAGE").unwrap())
@@ -753,10 +753,8 @@ fn enumerate_unique() {
     println!("first: {:?}", first);
     let second = journal.enumerate_unique_values().unwrap();
     println!("second: {:?}", second);
-    let third = journal.enumerate_unique_values().unwrap();
-    println!("third: {:?}", third);
-    assert_ne!(first, second);
-    assert_ne!(first, third);
+    assert_eq!(first, Enumeration::Value("Hello World!".to_string()));
+    assert_eq!(second, Enumeration::EoF);
 }
 
 // #[test]
