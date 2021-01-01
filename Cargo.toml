@@ -3,9 +3,12 @@ name = "sd-journal"
 version = "0.1.0"
 authors = ["Christian Klaue <mail@ck76.de>"]
 edition = "2018"
-license = "GPL-3.0-or-later"
-keywords = ["systemd", "journald", "sd-journal", "journal", "sdjournal"]
-#category = ["os::linux-apis", "api-bindings"]
+description = "A wrapper for sd-journal implemented in libsystemd."
+readme = "README.md"
+repository = "https://gitlab.com/systemd.rs/sd-journal"
+license = "AGPL-3.0-or-later"
+keywords = ["systemd", "journald", "sd-journal", "journal", "sdjournal", "logging"]
+categories = ["os::linux-apis", "external-ffi-bindings", "api-bindings"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
