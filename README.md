@@ -77,6 +77,7 @@ while let Ok(CursorMovement::Done) = journal.next() {
   - [ ] CursorMovement return Cursor instead of just a Done
 - [ ] additional trait implementation
 - [ ] Logger implementation
+- [ ] encoding support
 
 ## License
 
