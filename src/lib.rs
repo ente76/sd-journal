@@ -46,7 +46,27 @@
 //! documentation for Journal. libsystemd implements some additional
 //! enumerations. For each of those, an iterator has been implemented as well.
 //!
-//! ## Encoding
+//! ## Status & Stability
+//!
+//! This library is still under development. There are various methods marked
+//! with the feature "experimental". These methods are not considered finalized
+//! yet. The documentation of each of these methods contains further
+//! information. Additionally the library structure is currently under
+//! investigation. Currently all methods are implemented for struct Journal.
+//! This may change soon: methods that refer to a single record may be moved to
+//! struct Cursor and methods performing cursor movements (next(), previous()
+//! and similar ones) will return a Cursor.
+//!
+//! ### Planned Development
+//!
+//! - [ ] further rustification
+//!   - [ ] remove Cursor methods from Journal
+//!   - [ ] CursorMovement return Cursor instead of just a Done
+//! - [ ] additional trait implementation
+//! - [ ] Logger implementation
+//! - [ ] encoding support
+//!
+//! ### Encoding
 //!
 //! Journald stores data as "FIELDNAME=field value". While field names are
 //! strict UTF-8 encoded and field value are usually encoded in UTF-8, field
@@ -82,6 +102,7 @@
 //! ```rust
 //! use sd_journal::*;
 //! use std::path::PathBuf;
+//!
 //! // load local test data
 //! let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
 //! test_data.push("test-data/");
@@ -95,15 +116,6 @@
 //!     println!("{}", journal.get_data("MESSAGE").unwrap());
 //! }
 //! ```
-//!
-//! ## Planned Development
-//!
-//! - [ ] further rustification
-//!   - [ ] remove Cursor methods from Journal
-//!   - [ ] CursorMovement return Cursor instead of just a Done
-//! - [ ] additional trait implementation
-//! - [ ] Logger implementation
-//! - [ ] encoding support
 //!
 //! ## License
 //!
@@ -125,7 +137,6 @@
 //! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //!
 //! Individual licenses may be granted upon request.
-
 mod enums;
 pub mod iterators;
 
@@ -703,7 +714,7 @@ impl Journal {
     /// # Return values
     /// - Ok(()): success
     /// - Err(Error::SDError): sd-journal returned an error code
-    #[cfg(feature = "unstable")]
+    #[cfg(feature = "experimental")]
     pub fn seek_head(&self) -> Result<(), Error> {
         let result = unsafe { ffi::sd_journal_seek_head(self.ffi) };
         if result < 0 {
@@ -753,7 +764,7 @@ impl Journal {
     /// # Return values
     /// - Ok(()): success
     /// - Err(Error::SDError): sd-journal returned an error code
-    #[cfg(feature = "unstable")]
+    #[cfg(feature = "experimental")]
     pub fn seek_tail(&self) -> Result<(), Error> {
         let result = unsafe { ffi::sd_journal_seek_tail(self.ffi) };
         if result < 0 {
@@ -814,7 +825,7 @@ impl Journal {
     ///   either reflects a negative duration or the duration exceeds i64
     ///   microseconds
     #[cfg(feature = "td_chrono")]
-    #[cfg(feature = "unstable")]
+    #[cfg(feature = "experimental")]
     pub fn seek_monotonic(&self, boot_id: ID128, clock_monotonic: Duration) -> Result<(), Error> {
         // let usec = clock_monotonic.to_std()
         //                           .map_err(|_| Error::TimeStampOutOfRange)?
@@ -852,7 +863,7 @@ impl Journal {
     /// - Ok(())
     /// - Err(Error::SDError): sd-journal returned an error code
     #[cfg(feature = "td_chrono")]
-    #[cfg(feature = "unstable")]
+    #[cfg(feature = "experimental")]
     pub fn seek_realtime(&self, clock_realtime: NaiveDateTime) -> Result<(), Error> {
         let usec = clock_realtime.timestamp_subsec_micros() as u64
                    + clock_realtime.timestamp() as u64 * 1_000_000;
@@ -874,7 +885,7 @@ impl Journal {
     /// - Ok(())
     /// - Err(Error::SDError): sd-journal returned an error code
     /// - Err(Error::NullError): a file path contains a 0-byte
-    #[cfg(feature = "unstable")]
+    #[cfg(feature = "experimental")]
     pub fn seek_cursor_id(&self, cursor_id: String) -> Result<(), Error> {
         let c_cursor = CString::new(cursor_id).map_err(Error::NullError)?;
         let result = unsafe { ffi::sd_journal_seek_cursor(self.ffi, c_cursor.as_ptr()) };
@@ -964,7 +975,7 @@ impl Journal {
     ///   journal
     /// - Err(Error::SDError): sd-journal returned an error code
     #[cfg(feature = "td_chrono")]
-    #[cfg(feature = "unstable")]
+    #[cfg(feature = "experimental")]
     pub fn get_realtime_cutoff(&self) -> Result<(NaiveDateTime, NaiveDateTime), Error> {
         let mut from_usec: u64 = 0;
         let mut to_usec: u64 = 0;
@@ -997,7 +1008,7 @@ impl Journal {
     /// - Ok((Duration, Duration)): (from, to) respective duration since boot
     /// - Err(Error::SDError): sd-journal returned an error code
     #[cfg(feature = "td_chrono")]
-    #[cfg(feature = "unstable")]
+    #[cfg(feature = "experimental")]
     pub fn get_monotonic_cutoff(&self, boot_id: ID128) -> Result<(Duration, Duration), Error> {
         let mut from_usec: u64 = 0;
         let mut to_usec: u64 = 0;
@@ -1212,7 +1223,7 @@ impl Journal {
     /// # Return Values
     /// - Ok(u64): space required in Bytes
     /// - Err(Error::SDError): sd-journal returned an error code
-    #[cfg(feature = "unstable")]
+    #[cfg(feature = "experimental")]
     pub fn get_usage(&self) -> Result<u64, Error> {
         let mut usage: u64 = 0;
         let result = unsafe { ffi::sd_journal_get_usage(self.ffi, &mut usage) };
@@ -1237,7 +1248,7 @@ impl Journal {
     /// - Ok(NaiveDateTime): realtime timestamp of current record
     /// - Err(Error::SDError): sd-journal returned an error code
     #[cfg(feature = "td_chrono")]
-    #[cfg(feature = "unstable")]
+    #[cfg(feature = "experimental")]
     pub fn get_realtime(&self) -> Result<NaiveDateTime, Error> {
         let mut usec: u64 = 0;
         let result = unsafe { ffi::sd_journal_get_realtime_usec(self.ffi, &mut usec) };
@@ -1265,7 +1276,7 @@ impl Journal {
     ///   and boot id
     /// - Err(Error::SDError): sd-journal returned an error code
     #[cfg(feature = "td_chrono")]
-    #[cfg(feature = "unstable")]
+    #[cfg(feature = "experimental")]
     pub fn get_monotonic(&self) -> Result<(Duration, sd_id128::ID128), Error> {
         let mut usec: u64 = 0;
         let mut boot_id = ID128::default().into_ffi();
@@ -1297,7 +1308,7 @@ impl Journal {
     /// - Err(Error::UTF8Error): UTF-8 decoding error occured; although this
     ///   should never happen since the journal internal cursor id is stored in
     ///   valid UTF-8
-    #[cfg(feature = "unstable")]
+    #[cfg(feature = "experimental")]
     pub fn get_cursor_id(&self) -> Result<String, Error> {
         let mut ptr: *mut c_char = ptr::null_mut();
         let result = unsafe { ffi::sd_journal_get_cursor(self.ffi, &mut ptr) };
@@ -1326,7 +1337,7 @@ impl Journal {
     /// # Return Values
     /// - Ok(bool)
     /// - Err(Error::SDError): sd-journal returned an error code
-    #[cfg(feature = "unstable")]
+    #[cfg(feature = "experimental")]
     pub fn cursor_id_matches<S: Into<Vec<u8>>>(&self, cursor_id: S) -> Result<bool, Error> {
         let c_cursor = CString::new(cursor_id).map_err(Error::NullError)?;
         let result = unsafe { ffi::sd_journal_test_cursor(self.ffi, c_cursor.as_ptr()) };

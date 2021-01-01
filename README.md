@@ -23,7 +23,20 @@ libsystemd is developed in C around a single struct "journal" with no differenti
 This library also offers all the wrapped functions on the main struct `Journal`. Additionally two iterators are implemented for Journal: `CursorIterator` and `CursorReverseIterator` which both return a `Result<Cursor, Error>`. All methods implemented on Cursor do call a method implemented on Journal. For that reason, documentation of Cursor is always referring back to the documentation for Journal.  
 libsystemd implements some additional enumerations. For each of those, an iterator has been implemented as well.
 
-## Encoding
+## Status & Stability
+
+This library is still under development. There are various methods marked with the feature "experimental". These methods are not considered finalized yet. The documentation of each of these methods contains further information. Additionally the library structure is currently under investigation. Currently all methods are implemented for struct Journal. This may change soon: methods that refer to a single record may be moved to struct Cursor and methods performing cursor movements (next(), previous() and similar ones) will return a Cursor.
+
+### Planned Development
+
+- [ ] further rustification
+  - [ ] remove Cursor methods from Journal
+  - [ ] CursorMovement return Cursor instead of just a Done
+- [ ] additional trait implementation
+- [ ] Logger implementation
+- [ ] encoding support
+
+### Encoding
 
 Journald stores data as "FIELDNAME=field value". While field names are
 strict UTF-8 encoded and field value are usually encoded in UTF-8, field
@@ -72,15 +85,6 @@ while let Ok(CursorMovement::Done) = journal.next() {
     println!("{}", journal.get_data("MESSAGE").unwrap());
 }
 ```
-
-## Planned Development
-
-- [ ] further rustification
-  - [ ] remove Cursor methods from Journal
-  - [ ] CursorMovement return Cursor instead of just a Done
-- [ ] additional trait implementation
-- [ ] Logger implementation
-- [ ] encoding support
 
 ## License
 

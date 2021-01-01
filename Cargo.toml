@@ -13,8 +13,8 @@ categories = ["os::linux-apis", "external-ffi-bindings", "api-bindings"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["unstable", "td_chrono"]
-unstable = []
+default = ["experimental", "td_chrono"]
+experimental = []
 td_chrono = ["chrono"]
 
 [dependencies]
