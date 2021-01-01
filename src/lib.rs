@@ -60,7 +60,7 @@
 //!
 //! ### cargo.toml
 //!
-//! ```rust
+//! ```toml
 //! [dependencies]
 //! sdJournal = "0.1"
 //! ```
@@ -80,6 +80,8 @@
 //! ### Read Access
 //!
 //! ```rust
+//! use sd_journal::*;
+//! use std::path::PathBuf;
 //! // load local test data
 //! let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
 //! test_data.push("test-data/");
