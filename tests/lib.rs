@@ -434,7 +434,7 @@ fn get_realtime_cutoff() {
 }
 
 #[test]
-fn get_cutoff_monotonic() {
+fn get_monotonic_cutoff() {
     // get current boot id
     // get monotonic cutoff --> from < to
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
@@ -640,20 +640,20 @@ fn get_catalog() {
     // go to next without "MESSAGE_ID" --> get_catalogue returns an error
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.next().unwrap();
-    // while journal.get_data("MESSAGE_ID").is_err() {
-    //     match journal.next().unwrap() {
-    //         CursorMovement::EoF => return,
-    //         _ => ()
-    //     }
-    // }
-    // let c = journal.get_catalog().unwrap();
-    // println!("{}", c);
-    // while journal.get_data("MESSAGE_ID").is_ok() {
-    //     match journal.next().unwrap() {
-    //         CursorMovement::EoF => return,
-    //         _ => ()
-    //     }
-    // }
+    while journal.get_data("MESSAGE_ID").is_err() {
+        match journal.next().unwrap() {
+            CursorMovement::EoF => return,
+            _ => ()
+        }
+    }
+    let c = journal.get_catalog().unwrap();
+    println!("{}", c);
+    while journal.get_data("MESSAGE_ID").is_ok() {
+        match journal.next().unwrap() {
+            CursorMovement::EoF => return,
+            _ => ()
+        }
+    }
     journal.get_catalog().unwrap_err();
 }
 
@@ -739,16 +739,14 @@ fn iter_fields() {
 fn query_unique_values() {
     // run a query for a field without raising an error
     let journal = open_testdata();
-    journal.query_unique_values(&CString::new("MESSAGE").unwrap())
-           .unwrap();
+    journal.query_unique_values("MESSAGE").unwrap();
 }
 
 #[test]
 fn enumerate_unique_values() {
     // query MESSAGE field 3 times and assert each result differs
     let journal = open_testdata();
-    journal.query_unique_values(&CString::new("MESSAGE").unwrap())
-           .unwrap();
+    journal.query_unique_values("MESSAGE").unwrap();
     let first = journal.enumerate_unique_values().unwrap();
     println!("first: {:?}", first);
     let second = journal.enumerate_unique_values().unwrap();
@@ -757,37 +755,42 @@ fn enumerate_unique_values() {
     assert_eq!(second, Enumeration::EoF);
 }
 
-// #[test]
-// fn enumerate_available_unique() {
-//     // query MESSAGE field 3 times and assert each result differs
-//     let journal = Journal::open(FileFlags::AllFiles,
-// UserFlags::AllUsers).unwrap();     journal.query_unique(&CString::new("
-// MESSAGE").unwrap())            .unwrap();
-//     let first = journal.enumerate_available_unique().unwrap();
-//     println!("first: {:?}", first);
-//     let second = journal.enumerate_available_unique().unwrap();
-//     println!("second: {:?}", second);
-//     let third = journal.enumerate_available_unique().unwrap();
-//     println!("third: {:?}", third);
-//     assert_ne!(first, second);
-//     assert_ne!(first, third);
-// }
+#[test]
+fn enumerate_available_unique_values() {
+    // query MESSAGE field 3 times and assert each result differs
+    let journal = open_testdata();
+    journal.query_unique_values("MESSAGE").unwrap();
+    let first = journal.enumerate_unique_values().unwrap();
+    println!("first: {:?}", first);
+    let second = journal.enumerate_unique_values().unwrap();
+    println!("second: {:?}", second);
+    assert_eq!(first, Enumeration::Value("Hello World!".to_string()));
+    assert_eq!(second, Enumeration::EoF);
+}
 
-// #[test]
-// fn restart_unique() {
-//     // query MESSAGE field 3 times but restart after the second time
-//     // assert 1 and 2 differ
-//     // assert 1 and 3 match
-//     let journal = Journal::open(FileFlags::AllFiles,
-// UserFlags::AllUsers).unwrap();     journal.query_unique(&CString::new("
-// MESSAGE").unwrap())            .unwrap();
-//     let first = journal.enumerate_available_unique().unwrap();
-//     println!("first: {:?}", first);
-//     let second = journal.enumerate_available_unique().unwrap();
-//     println!("second: {:?}", second);
-//     journal.restart_unique();
-//     let third = journal.enumerate_available_unique().unwrap();
-//     println!("third: {:?}", third);
-//     assert_ne!(first, second);
-//     assert_eq!(first, third);
-// }
+#[test]
+fn restart_unique_value_enumeration() {
+    // query _PID field 3 times but restart after the second time
+    // assert 1 and 2 differ
+    // assert 1 and 3 match
+    let journal = open_testdata();
+    journal.query_unique_values("_PID").unwrap();
+    let first = journal.enumerate_unique_values().unwrap();
+    println!("first: {:?}", first);
+    let second = journal.enumerate_unique_values().unwrap();
+    println!("second: {:?}", second);
+    journal.restart_unique_value_enumeration();
+    let third = journal.enumerate_unique_values().unwrap();
+    println!("third: {:?}", third);
+    assert_ne!(first, second);
+    assert_eq!(first, third);
+}
+
+#[test]
+fn iter_unique_values() {
+    let journal = open_testdata();
+    for value in journal.iter_unique_values("MESSAGE").unwrap() {
+        let value = value.unwrap();
+        println!("{}", value);
+    }
+}

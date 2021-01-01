@@ -15,26 +15,27 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 use super::*;
 
+/// Iterator over entries in the journal
 pub struct CursorIterator<'a> {
     pub(crate) journal: &'a Journal
 }
 
+/// Iterator over entries in the journal in reverse order
 pub struct CursorReverseIterator<'a> {
     pub(crate) journal: &'a Journal
 }
 
-pub struct Cursor<'a> {
-    pub(crate) journal: &'a Journal
-}
-
+/// Iterator over the fields of a journal entry record
 pub struct Fields<'a> {
     pub(crate) journal: &'a Journal
 }
 
+/// Iterator over the field names of the journal
 pub struct FieldNames<'a> {
     pub(crate) journal: &'a Journal
 }
 
+/// Iterator over unique values assigned to a field in the journal
 pub struct UniqueValues<'a> {
     pub(crate) journal: &'a Journal
 }
@@ -71,44 +72,6 @@ impl<'a> IntoIterator for &'a Journal {
 
     fn into_iter(self) -> Self::IntoIter {
         CursorIterator { journal: self }
-    }
-}
-
-impl<'a> Cursor<'a> {
-    pub fn get_realtime(&self) -> Result<NaiveDateTime, Error> {
-        self.journal.get_realtime()
-    }
-
-    pub fn get_monotonic(&self) -> Result<(Duration, sd_id128::ID128), Error> {
-        self.journal.get_monotonic()
-    }
-
-    pub fn get_id(&self) -> Result<String, Error> {
-        self.journal.get_cursor_id()
-    }
-
-    pub fn id_matches<S: Into<Vec<u8>>>(&self, cursor_id: S) -> Result<bool, Error> {
-        self.journal.cursor_id_matches(cursor_id)
-    }
-
-    pub fn get_catalog(&self) -> Result<String, Error> {
-        self.journal.get_catalog()
-    }
-
-    pub fn get_data<F: Into<Vec<u8>>>(&self, field: F) -> Result<String, Error> {
-        self.journal.get_data(field)
-    }
-
-    pub fn enumerate_fields(&self) -> Result<Enumeration<(String, String)>, Error> {
-        self.journal.enumerate_fields()
-    }
-
-    pub fn enumerate_available_fields(&self) -> Result<Enumeration<(String, String)>, Error> {
-        self.journal.enumerate_available_fields()
-    }
-
-    pub fn restart_fields_enumeration(&self) {
-        self.journal.restart_fields_enumeration()
     }
 }
 

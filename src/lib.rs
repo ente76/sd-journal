@@ -27,15 +27,13 @@
 //! In future releases decoding support and a lossy decoding may be added.
 
 mod enums;
-mod iterators;
-// mod journalrecord;
-
-pub use enums::{CursorMovement, Enumeration, Error, Event, FileFlags, Level, NamespaceFlags,
-                PathFlags, UserFlags};
-pub use iterators::{CursorIterator, CursorReverseIterator, FieldNames, Fields, UniqueValues};
+pub mod iterators;
 
 use chrono::{Duration, NaiveDateTime};
-use libc::*;
+pub use enums::{CursorMovement, Enumeration, Error, Event, FileFlags, Level, NamespaceFlags,
+                PathFlags, UserFlags};
+use iterators::{CursorIterator, CursorReverseIterator, FieldNames, Fields, UniqueValues};
+use libc::{c_char, c_int, c_uchar, c_void, iovec, size_t};
 use sd_id128::ID128;
 use sd_sys::journal as ffi;
 use std::{ffi::{CStr, CString},
@@ -52,6 +50,12 @@ use std::{ffi::{CStr, CString},
 #[derive(Debug)]
 pub struct Journal {
     ffi: *mut ffi::sd_journal
+}
+
+/// A journal entry record
+#[derive(Debug)]
+pub struct Cursor<'a> {
+    pub(crate) journal: &'a Journal
 }
 
 impl Journal {
@@ -1308,6 +1312,7 @@ impl Journal {
             CStr::from_ptr(data as *mut c_char).to_str()
                                                .map_err(Error::UTF8Error)?
         };
+
         let field = c_field.into_string().map_err(Error::StringError)?;
         let result = match result.strip_prefix(&field) {
             None => Err(Error::UnexpectedDataFormat)?,
@@ -1444,15 +1449,52 @@ impl Journal {
     /// Query the journal for unique field values of a certain field (implements
     /// [`sd_journal_query_unique()`](https://www.freedesktop.org/software/systemd/man/sd_journal_query_unique.html#)).
     ///
+    /// # libsystemd Issues
+    /// `sd_journal_query_unique()` and the related functions do not always
+    /// succeed to return **unique** values, i.e. a value may be returned
+    /// repeatedly. An [issue](https://github.com/systemd/systemd/issues/18075)
+    /// has been reported.
+    ///
     /// # Return Values
     /// - Ok(())
     /// - Err(Error::SDError): sd-journal returned an error code
-    pub fn query_unique_values(&self, field: &CStr) -> Result<(), Error> {
-        let result = unsafe { ffi::sd_journal_query_unique(self.ffi, field.as_ptr()) };
+    pub fn query_unique_values<S: Into<Vec<u8>>>(&self, field: S) -> Result<(), Error> {
+        let c_field = CString::new(field).map_err(Error::NullError)?;
+        let result = unsafe { ffi::sd_journal_query_unique(self.ffi, c_field.as_ptr()) };
         if result < 0 {
             return Err(Error::SDError(result));
         }
         Ok(())
+    }
+
+    /// Enumerate all unique values for the field requested (implements
+    /// [`sd_journal_enumerate_unique`](https://www.freedesktop.org/software/systemd/man/sd_journal_query_unique.html#)).
+    ///
+    /// Return Values
+    /// - Ok(Enumeration::Value(String)): value
+    /// - Ok(Enumeration::EoF): no more unique values to enumerate
+    /// - Err(Error::UTF8Error): UTF-8 decoding error occured
+    /// - Err(Error::SDError): sd-journal returned an error code
+    pub fn enumerate_unique_values(&self) -> Result<Enumeration<String>, Error> {
+        let mut data: *const c_void = ptr::null_mut();
+        let mut length: size_t = 0;
+        let result = unsafe { ffi::sd_journal_enumerate_unique(self.ffi, &mut data, &mut length) };
+        if result < 0 {
+            return Err(Error::SDError(result));
+        }
+        if result == 0 {
+            return Ok(Enumeration::EoF);
+        }
+        let result = unsafe {
+            CStr::from_ptr(data as *const c_char).to_str()
+                                                 .map_err(Error::UTF8Error)?
+        };
+        let index = match result.find('=') {
+            None => Err(Error::UnexpectedDataFormat)?,
+            Some(index) => index
+        };
+        let (_, result) = result.split_at(index + 1);
+        Ok(Enumeration::Value(result.to_owned()))
     }
 
     /// Enumerate available unique values for the field requested (implements
@@ -1481,43 +1523,89 @@ impl Journal {
         }))
     }
 
-    /// Enumerate all unique values for the field requested (implements
-    /// [`sd_journal_enumerate_unique`](https://www.freedesktop.org/software/systemd/man/sd_journal_query_unique.html#)).
-    ///
-    /// Return Values:
-    /// - Ok(Enumeration::Value(String)): value
-    /// - Ok(Enumeration::EoF): no more unique values to enumerate
-    /// - Err(Error::UTF8Error): UTF-8 decoding error occured
-    /// - Err(Error::SDError): sd-journal returned an error code
-    pub fn enumerate_unique_values(&self) -> Result<Enumeration<String>, Error> {
-        let mut data: *const c_void = ptr::null_mut();
-        let mut length: size_t = 0;
-        let result = unsafe { ffi::sd_journal_enumerate_unique(self.ffi, &mut data, &mut length) };
-        if result < 0 {
-            return Err(Error::SDError(result));
-        }
-        if result == 0 {
-            return Ok(Enumeration::EoF);
-        }
-        let result = unsafe {
-            CStr::from_ptr(data as *const c_char).to_str()
-                                                 .map_err(Error::UTF8Error)?
-        };
-        let index = match result.find('=') {
-            None => Err(Error::UnexpectedDataFormat)?,
-            Some(index) => index
-        };
-        let (_, result) = result.split_at(index + 1);
-        Ok(Enumeration::Value(result.to_owned()))
-    }
-
     /// Restart enumeration of unique values (implements
     /// [`sd_journal_restart_unique`](https://www.freedesktop.org/software/systemd/man/sd_journal_query_unique.html#)).
     pub fn restart_unique_value_enumeration(&self) {
         unsafe { ffi::sd_journal_restart_unique(self.ffi) }
     }
 
-    pub fn iter_unique_values<'a>(&'a self) -> UniqueValues<'a> {
-        UniqueValues { journal: &self }
+    /// Returns an iterator over unique values of a field.
+    ///
+    /// # Examples
+    /// ```
+    /// # use sd_journal::*;
+    /// # use std::path::PathBuf;
+    /// # let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    /// # test_data.push("test-data/");
+    /// # println!("looking for test data in folder {}", test_data.display());
+    /// # let journal = Journal::open_directory(&test_data, PathFlags::FullPath, UserFlags::AllUsers).unwrap();
+    /// for value in journal.iter_unique_values("MESSAGE").unwrap() {
+    ///     let value = value.unwrap();
+    ///     println!("{}", value);
+    /// }
+    /// ```
+    ///
+    /// # Return Values
+    /// - Ok(UniqueValues)
+    /// - Err(Error::SDError): sd-journal returned an error code
+    pub fn iter_unique_values<'a, S: Into<Vec<u8>>>(&'a self,
+                                                    field: S)
+                                                    -> Result<UniqueValues<'a>, Error> {
+        self.query_unique_values(field)?;
+        Ok(UniqueValues { journal: &self })
+    }
+}
+
+impl<'a> Cursor<'a> {
+    /// see [Journal::get_realtime](Journal::get_realtime)
+    pub fn get_realtime(&self) -> Result<NaiveDateTime, Error> {
+        self.journal.get_realtime()
+    }
+
+    /// see [Journal::get_monotonic](Journal::get_monotonic)
+    pub fn get_monotonic(&self) -> Result<(Duration, sd_id128::ID128), Error> {
+        self.journal.get_monotonic()
+    }
+
+    /// see [Journal::get_cursor_id](Journal::get_cursor_id)
+    pub fn get_id(&self) -> Result<String, Error> {
+        self.journal.get_cursor_id()
+    }
+
+    /// see [Journal::cursor_id_matches](Journal::cursor_id_matches)
+    pub fn id_matches<S: Into<Vec<u8>>>(&self, cursor_id: S) -> Result<bool, Error> {
+        self.journal.cursor_id_matches(cursor_id)
+    }
+
+    /// see [Journal::get_catalog](Journal::get_catalog)
+    pub fn get_catalog(&self) -> Result<String, Error> {
+        self.journal.get_catalog()
+    }
+
+    /// see [Journal::get_data](Journal::get_data)
+    pub fn get_data<F: Into<Vec<u8>>>(&self, field: F) -> Result<String, Error> {
+        self.journal.get_data(field)
+    }
+
+    /// see [Journal::enumerate_fields](Journal::enumerate_fields)
+    pub fn enumerate_fields(&self) -> Result<Enumeration<(String, String)>, Error> {
+        self.journal.enumerate_fields()
+    }
+
+    /// see [Journal::enumerate_available_fields](Journal::
+    /// enumerate_available_fields)
+    pub fn enumerate_available_fields(&self) -> Result<Enumeration<(String, String)>, Error> {
+        self.journal.enumerate_available_fields()
+    }
+
+    /// see [Journal::restart_fields_enumeration](Journal::
+    /// restart_fields_enumeration)
+    pub fn restart_fields_enumeration(&self) {
+        self.journal.restart_fields_enumeration()
+    }
+
+    /// see [Journal::iter_fields](Journal::iter_fields)
+    pub fn iter_fields(&self) -> Fields<'a> {
+        self.journal.iter_fields()
     }
 }

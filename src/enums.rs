@@ -24,17 +24,14 @@ use std::{ffi::{IntoStringError, NulError},
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     SDError(i32),
-    UTF8ErrorInvalidPath,
     UTF8Error(Utf8Error),
     NullError(NulError),
     RangeError,
     StringError(IntoStringError),
-    InvalidPath,
-    TooManyItems,
-    InvalidatedIterator,
     TimeStampOutOfRange,
     UnexpectedDataFormat
 }
+
 /// Log Level of a log entry according to syslog.h as used in the journal.
 ///
 /// Two convinience methods for the levels exist:
@@ -113,6 +110,8 @@ pub enum Enumeration<T> {
     EoF
 }
 
+/// File related options for opening a journal
+#[derive(Debug, PartialEq, Eq)]
 pub enum FileFlags {
     RuntimeOnly      = ffi::SD_JOURNAL_RUNTIME_ONLY as isize,
     LocalOnly        = ffi::SD_JOURNAL_LOCAL_ONLY as isize,
@@ -120,6 +119,7 @@ pub enum FileFlags {
     AllFiles         = 0
 }
 
+/// User related options for opening a journal
 #[derive(Debug, PartialEq, Eq)]
 pub enum UserFlags {
     SystemOnly               = ffi::SD_JOURNAL_SYSTEM as isize,
@@ -128,16 +128,19 @@ pub enum UserFlags {
     AllUsers                 = 0
 }
 
+/// Namespace related options for opening a journal
 pub enum NamespaceFlags {
     SelectedNamespaceOnly    = 0,
     DefaultNamespaceIncluded = ffi::SD_JOURNAL_INCLUDE_DEFAULT_NAMESPACE as isize
 }
 
+/// Path related options for opening a journal
 pub enum PathFlags {
     FullPath     = 0,
     PathToOSRoot = ffi::SD_JOURNAL_OS_ROOT as isize
 }
 
+/// Journal event types
 #[derive(Debug, PartialEq, Eq)]
 pub enum Event {
     NOOP,
