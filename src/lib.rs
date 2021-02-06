@@ -149,7 +149,6 @@ use sd_id128::ID128;
 use sd_sys::journal as ffi;
 use std::{ffi::{CStr, CString},
           fmt::Debug,
-          os::unix::io::RawFd,
           path::PathBuf,
           ptr};
 
@@ -1113,7 +1112,7 @@ impl Journal {
     /// # Return Values
     /// - Ok(RawFd)
     /// - Err(Error::SDError): sd-journal returned an error code
-    pub fn get_fd(&self) -> Result<RawFd, Error> {
+    pub fn get_fd(&self) -> Result<std::os::unix::io::RawFd, Error> {
         let result = unsafe { ffi::sd_journal_get_fd(self.ffi) };
         if result < 0 {
             return Err(Error::SDError(result));
