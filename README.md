@@ -88,8 +88,10 @@ while let Ok(CursorMovement::Done) = journal.next() {
 
 ## License
 
-sd-journal: a wrapper for sd-journal of libsystemd
+sd-journal is published under the AGPL-3.0, individual licenses may be granted upon request.
 
+```license
+sd-journal: a wrapper for sd-journal of libsystemd
 Copyright (C) 2020 Christian Klaue [mail@ck76.de]
 
 This program is free software: you can redistribute it and/or modify
@@ -106,3 +108,4 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Individual licenses may be granted upon request.
+```

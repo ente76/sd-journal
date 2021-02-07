@@ -6,7 +6,7 @@ edition = "2018"
 description = "A wrapper for sd-journal implemented in libsystemd."
 readme = "README.md"
 repository = "https://gitlab.com/systemd.rs/sd-journal"
-license = "AGPL-3.0-or-later"
+license = "AGPL-3.0"
 keywords = ["systemd", "journald", "sd-journal", "journal", "logging"]
 categories = ["os::linux-apis", "external-ffi-bindings", "api-bindings"]
 
