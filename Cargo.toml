@@ -1,6 +1,6 @@
 [package]
 name = "sd-journal"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Christian Klaue <mail@ck76.de>"]
 edition = "2018"
 description = "A wrapper for sd-journal implemented in libsystemd."
@@ -18,7 +18,7 @@ experimental = []
 td_chrono = ["chrono"]
 
 [dependencies]
-sd-id128 = {path = "../sd-id128"}
-sd-sys = {path = "../sd-sys"}
+sd-id128 = "0.1"
+sd-sys = "0.1"
 libc = "0.2"
 chrono = {version = "0.4", optional = true}
