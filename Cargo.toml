@@ -18,7 +18,7 @@ experimental = []
 td_chrono = ["chrono"]
 
 [dependencies]
-sd-id128 = "0.1"
-sd-sys = "0.1"
+sd-sys = {version="1"}
+sd-id128 = {version="1"}
 libc = "0.2"
 chrono = {version = "0.4", optional = true}

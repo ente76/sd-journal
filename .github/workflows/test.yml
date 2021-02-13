@@ -1,4 +1,4 @@
-name: Test
+name: test
 
 on:
   push:
@@ -9,18 +9,33 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+
 jobs:
-  build:
+  test:
+    name: test
 
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.system }}
 
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - system: "ubuntu-20.04"
+            features: "--features \"240\""
+          - system: "ubuntu-18.04"
+            features: "--features \"233\""
+          - system: "ubuntu-16.04"
+            features: ""
+    
     steps:
     - uses: actions/checkout@v2
     - name: update
       run: sudo apt-get upgrade
-    - name: libsystemd
+    - name: install libsystemd
       run: sudo apt-get install -y libsystemd-dev
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+    - name: build
+      run: cargo build --verbose --no-default-features ${{ matrix.features }}
+    - name: run tests
+      run: cargo test --verbose --no-default-features ${{ matrix.features }}
+    - name: doc test
+      run: cargo doc --no-default-features ${{ matrix.features }}
