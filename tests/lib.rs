@@ -20,13 +20,6 @@ use std::{ffi::CString,
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-fn open_testdata() -> sd_journal::Journal {
-    let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    test_data.push("test-data/");
-    println!("looking for test data in folder {}", test_data.display());
-    Journal::open_directory(&test_data, PathFlags::FullPath, UserFlags::AllUsers).unwrap()
-}
-
 #[test]
 fn log_message() {
     // send various different "Hello World!" to Journal
@@ -398,45 +391,32 @@ fn add_match() {
 
 #[test]
 fn add_disjunction() {
-    // add a match for "MESSAGE=Hello Woooooorld!" OR "_TRANSPORT=journal" should
-    // find data (i.e. next() return Done)
+    // add a match for "MESSAGE=Hello Woooooooooorld!" OR "MESSAGE=Hello World!"
+    // should find data (i.e. next() return Done)
     Journal::log_message(Level::Info, "Hello World!").unwrap();
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.add_match(b"MESSAGE=Hello World!").unwrap();
     journal.add_disjunction().unwrap();
-    journal.add_match(b"_TRANSPORT=journal").unwrap();
+    journal.add_match(b"MESSAGE=Hello Woooooooooorld!").unwrap();
     assert_eq!(journal.next().unwrap(), CursorMovement::Done);
 }
 
 #[test]
-fn test_data() {
-    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
-    journal.seek_head().unwrap();
-    let done: bool = false;
-    while !done {
-        if journal.next().unwrap() == CursorMovement::EoF {
-            println!("reached the end");
-            break;
-        }
-        let m = journal.get_data("MESSAGE").unwrap();
-        println!("{}", m);
-    }
-}
-
-#[test]
 fn add_conjunction() {
-    // add a match for "MESSAGE=Hello Woooooorld!" AND "_TRANSPORT=journal" should
-    // not find any record (i.e. next() return EoF)
-    let journal = open_testdata();
-    journal.add_match(b"MESSAGE=Hello Woooooorld!").unwrap();
+    // add a match for "MESSAGE=Hello Woooooooooorld!" AND "MESSAGE=Hello World!"
+    // should not find any data (i.e. next() returns EoF)
+    Journal::log_message(Level::Info, "Hello World!").unwrap();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
+    journal.add_match(b"MESSAGE=Hello World!").unwrap();
     journal.add_conjunction().unwrap();
-    journal.add_match(b"_TRANSPORT=journal").unwrap();
+    journal.add_match(b"MESSAGE=Hello Woooooooooorld!").unwrap();
     assert_eq!(journal.next().unwrap(), CursorMovement::EoF);
 }
 
 #[test]
 fn flush_matches() {
-    let journal = open_testdata();
+    Journal::log_message(Level::Info, "Hello World!").unwrap();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.add_match(b"MESSAGE=Hello Woooooorld!").unwrap();
     assert_eq!(journal.next().unwrap(), CursorMovement::EoF);
     journal.flush_matches();
@@ -446,7 +426,7 @@ fn flush_matches() {
 #[test]
 fn get_realtime_cutoff() {
     // get realtime cutoff --> from < to
-    let journal = open_testdata();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     let (from, to) = journal.get_realtime_cutoff().unwrap();
     println!("{} - {}", from, to);
     assert!(from < to);
@@ -611,7 +591,7 @@ fn get_usage() {
 #[test]
 fn get_realtime() {
     // get realtime_usec on a postioned journal at head and tail
-    let journal = open_testdata();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.next().unwrap();
     println!("realtime at journal head: {}",
              journal.get_realtime().unwrap());
@@ -624,7 +604,7 @@ fn get_realtime() {
 #[test]
 fn get_monotonic() {
     // get realtime_usec on a postioned journal at head and tail
-    let journal = open_testdata();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.next().unwrap();
     println!("monotonic at journal head: ({}, {})",
              journal.get_monotonic().unwrap().0,
@@ -728,7 +708,7 @@ fn restart_fields_enumeration() {
     // test fails on:
     // - no field MESSAGE ever found (first & second loop exit without match)
     // - restart_data() fails, i.e. second loop does not find "MESSAGE" once more
-    let journal = open_testdata();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.next().unwrap();
     while let Ok(Enumeration::Value((field, value))) = journal.enumerate_fields() {
         println!("{}: {}", field, value);
@@ -748,7 +728,7 @@ fn restart_fields_enumeration() {
 
 #[test]
 fn iter_fields() {
-    let journal = open_testdata();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.next().unwrap();
     // The following 2 loops are synonyms
     while let Ok(Enumeration::Value((field, value))) = journal.enumerate_fields() {
@@ -763,14 +743,14 @@ fn iter_fields() {
 #[test]
 fn query_unique_values() {
     // run a query for a field without raising an error
-    let journal = open_testdata();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.query_unique_values("MESSAGE").unwrap();
 }
 
 #[test]
 fn enumerate_unique_values() {
     // query MESSAGE field 3 times and assert each result differs
-    let journal = open_testdata();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.query_unique_values("MESSAGE").unwrap();
     let first = journal.enumerate_unique_values().unwrap();
     println!("first: {:?}", first);
@@ -784,7 +764,7 @@ fn enumerate_unique_values() {
 #[cfg(any(feature = "246"))]
 fn enumerate_available_unique_values() {
     // query MESSAGE field 3 times and assert each result differs
-    let journal = open_testdata();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.query_unique_values("MESSAGE").unwrap();
     let first = journal.enumerate_unique_values().unwrap();
     println!("first: {:?}", first);
@@ -799,7 +779,7 @@ fn restart_unique_value_enumeration() {
     // query _PID field 3 times but restart after the second time
     // assert 1 and 2 differ
     // assert 1 and 3 match
-    let journal = open_testdata();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.query_unique_values("_PID").unwrap();
     let first = journal.enumerate_unique_values().unwrap();
     println!("first: {:?}", first);
@@ -814,7 +794,7 @@ fn restart_unique_value_enumeration() {
 
 #[test]
 fn iter_unique_values() {
-    let journal = open_testdata();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     for value in journal.iter_unique_values("MESSAGE").unwrap() {
         let value = value.unwrap();
         println!("{}", value);
