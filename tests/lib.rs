@@ -753,7 +753,7 @@ fn enumerate_unique_values() {
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.query_unique_values("MESSAGE").unwrap();
     let mut results = Vec::new();
-    while true {
+    loop {
         let value = journal.enumerate_unique_values().unwrap();
         if value == Enumeration::EoF {
             println!("reached EoF");
@@ -763,6 +763,7 @@ fn enumerate_unique_values() {
             println!("found duplicate: {:?}", value);
             assert!(false);
         }
+        println!("{:?}", value);
         results.push(value);
     }
     // let first = journal.enumerate_unique_values().unwrap();
