@@ -398,10 +398,10 @@ fn add_match() {
 
 #[test]
 fn add_disjunction() {
-    Journal::log_message(Level::Info, "Hello World!").unwrap();
     // add a match for "MESSAGE=Hello Woooooorld!" OR "_TRANSPORT=journal" should
     // find data (i.e. next() return Done)
-    let journal = open_testdata();
+    Journal::log_message(Level::Info, "Hello World!").unwrap();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.add_match(b"MESSAGE=Hello World!").unwrap();
     journal.add_disjunction().unwrap();
     journal.add_match(b"_TRANSPORT=journal").unwrap();
