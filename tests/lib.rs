@@ -121,12 +121,12 @@ fn open_directory() {
     Journal::open_directory(PathBuf::from("/"),
                             PathFlags::PathToOSRoot,
                             UserFlags::AllUsers).unwrap();
-    // open test data included in a project located in a folder "test-data" in the
-    // project root
-    let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    test_data.push("test-data/");
-    println!("looking for test data in folder {}", test_data.display());
-    Journal::open_directory(test_data, PathFlags::FullPath, UserFlags::AllUsers).unwrap();
+    let machine_id = sd_id128::ID128::machine_id().unwrap()
+                                                  .to_string_sd()
+                                                  .unwrap();
+    let mut sdjournal_path = PathBuf::from("/var/log/journal/");
+    sdjournal_path.push(&machine_id);
+    Journal::open_directory(sdjournal_path, PathFlags::FullPath, UserFlags::AllUsers).unwrap();
     // fail on a non existing folder
     Journal::open_directory("/...", PathFlags::FullPath, UserFlags::AllUsers).unwrap_err();
 }
@@ -143,12 +143,6 @@ fn open_files() {
     sdjournal_path.push("system.journal");
     println!("looking for sd-journal in {}", sdjournal_path.display());
     Journal::open_files([sdjournal_path]).unwrap();
-    // open test data included in a project located in a folder "test-data" in the
-    // project root
-    let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    test_data.push("test-data/test.journal");
-    println!("looking for test data in {}", test_data.display());
-    Journal::open_files([test_data]).unwrap();
     // fail on non-existing file
     Journal::open_files(vec!["/abcdefghijk.xyz"]).unwrap_err();
 }
