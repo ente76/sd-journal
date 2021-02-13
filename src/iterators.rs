@@ -31,6 +31,7 @@ pub struct Fields<'a> {
 }
 
 /// Iterator over the field names of the journal
+#[cfg(any(feature = "246", feature = "245", feature = "229"))]
 pub struct FieldNames<'a> {
     pub(crate) journal: &'a Journal
 }
@@ -108,6 +109,7 @@ impl<'a> Iterator for UniqueValues<'a> {
     }
 }
 
+#[cfg(any(feature = "246", feature = "245", feature = "229"))]
 impl<'a> Iterator for FieldNames<'a> {
     type Item = Result<String, Error>;
 
