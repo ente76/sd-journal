@@ -394,9 +394,9 @@ fn add_disjunction() {
     Journal::log_message(Level::Info, "Hello World!").unwrap();
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.wait(10).unwrap();
-    journal.add_match(b"MESSAGE=Hello World!").unwrap();
+    journal.add_match("MESSAGE=Hello World!").unwrap();
     journal.add_disjunction().unwrap();
-    journal.add_match(b"MESSAGE=Hello Woooooooooorld!").unwrap();
+    journal.add_match("MESSAGE=Hello Woooooooooorld!").unwrap();
     assert_eq!(journal.next().unwrap(), CursorMovement::Done);
 }
 
@@ -407,9 +407,9 @@ fn add_conjunction() {
     Journal::log_message(Level::Info, "Hello World!").unwrap();
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.wait(10).unwrap();
-    journal.add_match(b"MESSAGE=Hello World!").unwrap();
+    journal.add_match("MESSAGE=Hello World!").unwrap();
     journal.add_conjunction().unwrap();
-    journal.add_match(b"MESSAGE=Hello Woooooooooorld!").unwrap();
+    journal.add_match("MESSAGE=Hello Woooooooooorld!").unwrap();
     assert_eq!(journal.next().unwrap(), CursorMovement::EoF);
 }
 
@@ -761,7 +761,6 @@ fn enumerate_unique_values() {
             println!("found duplicate: {:?}", value);
             assert!(false);
         }
-        println!("{:?}", value);
         results.push(value);
     }
     // let first = journal.enumerate_unique_values().unwrap();
