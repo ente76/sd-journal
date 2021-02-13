@@ -45,9 +45,9 @@ jobs:
       run: ls -la
     - name: current folder
       run: pwd
-    - name: run tests
-      run: cargo test --verbose ${{ matrix.features }}
     - name: run special test
       run: cargo test --package sd-journal --test lib --all-features -- test_data --exact --nocapture
+    - name: run tests
+      run: cargo test --verbose ${{ matrix.features }}
     - name: doc test
       run: cargo doc ${{ matrix.features }}
