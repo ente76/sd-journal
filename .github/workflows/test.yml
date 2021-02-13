@@ -41,8 +41,10 @@ jobs:
       run: sudo apt-get install -y libsystemd-dev
     - name: build
       run: cargo build --verbose ${{ matrix.features }}
-    - name: run special test
-      run: cargo test --package sd-journal --test lib --no-default-features --features "td_chrono experimental" -- enumerate_unique_values --exact --nocapture
+    - name: whoami
+      run: whoami
+    - name: ls
+      run: ls -la test-data
     - name: run tests
       run: cargo test --verbose ${{ matrix.features }}
     - name: doc test

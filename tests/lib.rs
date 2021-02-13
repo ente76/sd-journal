@@ -157,10 +157,13 @@ fn open_files() {
 fn next() {
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     // loop over a journal & print it's messages
+    journal.seek_head().unwrap();
+    let mut counter = 0;
     while let Ok(CursorMovement::Done) = journal.next() {
         // do something on each cursor, e.g. print the MESSAGE
-        println!("{}", journal.get_data("MESSAGE").unwrap());
+        counter += 1;
     }
+    println!("looped over {} items", counter);
     // do a next() after seek_tail() to hit an EoF
     journal.seek_tail().unwrap();
     // there is a [defect in libsystemd](https://github.com/systemd/systemd/issues/17662)
@@ -174,15 +177,14 @@ fn next() {
 fn iter() {
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     // loop over a journal & print it's messages
-    for cursor in journal.iter() {
-        match cursor {
-            Err(_) => break,
-            Ok(cursor) => println!("{}", cursor.get_data("MESSAGE").unwrap())
-        }
+    let mut counter = 0;
+    for _ in journal.iter() {
+        counter += 1;
     }
+    println!("looped over {} items", counter);
     // ...
     journal.seek_head().unwrap();
-    let cursor = journal.iter_reverse().next().unwrap().unwrap();
+    let cursor = journal.iter().next().unwrap().unwrap();
     // the following two lines are actually return the same value
     let m1 = cursor.get_data("MESSAGE").unwrap();
     let m2 = journal.get_data("MESSAGE").unwrap();
@@ -391,6 +393,7 @@ fn add_disjunction() {
     // should find data (i.e. next() return Done)
     Journal::log_message(Level::Info, "Hello World!").unwrap();
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
+    journal.wait(10).unwrap();
     journal.add_match(b"MESSAGE=Hello World!").unwrap();
     journal.add_disjunction().unwrap();
     journal.add_match(b"MESSAGE=Hello Woooooooooorld!").unwrap();
@@ -403,6 +406,7 @@ fn add_conjunction() {
     // should not find any data (i.e. next() returns EoF)
     Journal::log_message(Level::Info, "Hello World!").unwrap();
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
+    journal.wait(10).unwrap();
     journal.add_match(b"MESSAGE=Hello World!").unwrap();
     journal.add_conjunction().unwrap();
     journal.add_match(b"MESSAGE=Hello Woooooooooorld!").unwrap();
@@ -413,6 +417,7 @@ fn add_conjunction() {
 fn flush_matches() {
     Journal::log_message(Level::Info, "Hello World!").unwrap();
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
+    journal.wait(10).unwrap();
     journal.add_match(b"MESSAGE=Hello Woooooorld!").unwrap();
     assert_eq!(journal.next().unwrap(), CursorMovement::EoF);
     journal.flush_matches();
