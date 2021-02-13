@@ -43,6 +43,8 @@ jobs:
       run: cargo build --verbose ${{ matrix.features }}
     - name: journal version
       run: journalctl --version
+    - name: journal open folder
+      run: journalctl -D test-data
     - name: run tests
       run: cargo test --verbose ${{ matrix.features }}
     - name: doc test

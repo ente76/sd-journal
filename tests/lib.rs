@@ -786,7 +786,7 @@ fn iter_unique_values() {
     let mut counter = 0;
     for value in journal.iter_unique_values("MESSAGE").unwrap() {
         match value {
-            Ok(v) => counter += 1,
+            Ok(_) => counter += 1,
             Err(_) => ()
         }
     }
