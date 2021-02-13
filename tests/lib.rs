@@ -410,7 +410,7 @@ fn add_disjunction() {
 
 #[test]
 fn test_data() {
-    let journal = open_testdata();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.seek_head().unwrap();
     let done: bool = false;
     while !done {
