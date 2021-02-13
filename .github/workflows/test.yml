@@ -43,6 +43,7 @@ jobs:
       run: cargo build --verbose ${{ matrix.features }}
     - name: check folder structure
       run: ls -la
+    - name: current folder
       run: pwd
     - name: run tests
       run: cargo test --verbose ${{ matrix.features }}
