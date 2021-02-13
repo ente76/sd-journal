@@ -25,13 +25,13 @@ jobs:
           - system: "ubuntu-20.04"
             features: "--no-default-features --features \"229 td_chrono experimental\""
           - system: "ubuntu-20.04"
-            features: "--no-default-features"
+            features: "--no-default-features --features \"td_chrono experimental\""
           - system: "ubuntu-18.04"
             features: "--no-default-features --features \"229 td_chrono experimental\""
           - system: "ubuntu-18.04"
-            features: "--no-default-features"
+            features: "--no-default-features --features \"td_chrono experimental\""
           - system: "ubuntu-16.04"
-            features: "--no-default-features"
+            features: "--no-default-features --features \"td_chrono experimental\""
     
     steps:
     - uses: actions/checkout@v2
