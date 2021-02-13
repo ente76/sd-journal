@@ -805,10 +805,12 @@ fn restart_unique_value_enumeration() {
 #[test]
 fn iter_unique_values() {
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
+    let mut counter = 0;
     for value in journal.iter_unique_values("MESSAGE").unwrap() {
         match value {
-            Ok(v) => println!("{}", v),
+            Ok(v) => counter += 1,
             Err(_) => ()
         }
     }
+    println!("number of unique values in log: {}", counter);
 }

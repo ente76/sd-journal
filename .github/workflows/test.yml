@@ -44,7 +44,7 @@ jobs:
     - name: whoami
       run: whoami
     - name: ls
-      run: ls -la test-data
+      run: journalctl -D test-data
     - name: run tests
       run: cargo test --verbose ${{ matrix.features }}
     - name: doc test
