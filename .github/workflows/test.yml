@@ -46,7 +46,7 @@ jobs:
     - name: current folder
       run: pwd
     - name: run special test
-      run: cargo test --package sd-journal --test lib --all-features -- test_data --exact --nocapture
+      run: cargo test --package sd-journal --test lib --no-default-features --features "td_chrono experimental" -- test_data --exact --nocapture
     - name: run tests
       run: cargo test --verbose ${{ matrix.features }}
     - name: doc test
