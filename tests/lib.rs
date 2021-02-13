@@ -121,28 +121,12 @@ fn open_directory() {
     Journal::open_directory(PathBuf::from("/"),
                             PathFlags::PathToOSRoot,
                             UserFlags::AllUsers).unwrap();
-    let machine_id = sd_id128::ID128::machine_id().unwrap()
-                                                  .to_string_sd()
-                                                  .unwrap();
-    let mut sdjournal_path = PathBuf::from("/var/log/journal/");
-    sdjournal_path.push(&machine_id);
-    Journal::open_directory(sdjournal_path, PathFlags::FullPath, UserFlags::AllUsers).unwrap();
     // fail on a non existing folder
     Journal::open_directory("/...", PathFlags::FullPath, UserFlags::AllUsers).unwrap_err();
 }
 
 #[test]
 fn open_files() {
-    // open the curreńt system.journal file in the default location for journals
-    // /var/log/journal/<MACHINE-ID>/system.journal
-    let machine_id = sd_id128::ID128::machine_id().unwrap()
-                                                  .to_string_sd()
-                                                  .unwrap();
-    let mut sdjournal_path = PathBuf::from("/var/log/journal/");
-    sdjournal_path.push(&machine_id);
-    sdjournal_path.push("system.journal");
-    println!("looking for sd-journal in {}", sdjournal_path.display());
-    Journal::open_files([sdjournal_path]).unwrap();
     // fail on non-existing file
     Journal::open_files(vec!["/abcdefghijk.xyz"]).unwrap_err();
 }

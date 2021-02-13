@@ -41,10 +41,8 @@ jobs:
       run: sudo apt-get install -y libsystemd-dev
     - name: build
       run: cargo build --verbose ${{ matrix.features }}
-    - name: whoami
-      run: whoami
-    - name: ls
-      run: journalctl -D test-data
+    - name: journal version
+      run: journalctl --version
     - name: run tests
       run: cargo test --verbose ${{ matrix.features }}
     - name: doc test
