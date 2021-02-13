@@ -350,7 +350,7 @@ fn add_match() {
     // add a match for "MESSAGE=Hello World!" should succeed while a match for
     // "MESSAGE=Hello Woooooorld!" should not return any matches
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
-    journal.wait(10).unwrap();
+    std::thread::sleep(std::time::Duration::new(5, 0));
     journal.add_match("MESSAGE=Hello World!").unwrap();
     assert_eq!(journal.next().unwrap(), CursorMovement::Done);
     while let Ok(CursorMovement::Done) = journal.next() {
@@ -373,7 +373,7 @@ fn add_disjunction() {
     Journal::log_message(Level::Info, "Hello World!").unwrap();
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     println!("now {:?}", std::time::Instant::now());
-    journal.wait(10).unwrap();
+    std::thread::sleep(std::time::Duration::new(5, 0));
     println!("now {:?}", std::time::Instant::now());
     journal.add_match("MESSAGE=Hello World!").unwrap();
     journal.add_disjunction().unwrap();
@@ -387,7 +387,7 @@ fn add_conjunction() {
     // should not find any data (i.e. next() returns EoF)
     Journal::log_message(Level::Info, "Hello World!").unwrap();
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
-    journal.wait(10).unwrap();
+    std::thread::sleep(std::time::Duration::new(5, 0));
     journal.add_match("MESSAGE=Hello World!").unwrap();
     journal.add_conjunction().unwrap();
     journal.add_match("MESSAGE=Hello Woooooooooorld!").unwrap();
@@ -398,7 +398,7 @@ fn add_conjunction() {
 fn flush_matches() {
     Journal::log_message(Level::Info, "Hello World!").unwrap();
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
-    journal.wait(10).unwrap();
+    std::thread::sleep(std::time::Duration::new(5, 0));
     journal.add_match(b"MESSAGE=Hello Woooooorld!").unwrap();
     assert_eq!(journal.next().unwrap(), CursorMovement::EoF);
     journal.flush_matches();
