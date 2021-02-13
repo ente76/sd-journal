@@ -505,10 +505,16 @@ fn restart_fields() {
 #[test]
 #[cfg(any(feature = "246", feature = "245", feature = "229"))]
 fn iter_field_names() {
-    // loop once through all fields an print them assuming no error is raised ever
+    // loop once through all fields and print them assuming no error is raised ever
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     for fieldname in journal.iter_field_names() {
-        println!("{}", fieldname.unwrap());
+        match fieldname {
+            Ok(name) => println!("{}", name),
+            Err(e) => {
+                println!("{:?}", e);
+                break;
+            }
+        }
     }
 }
 
@@ -791,6 +797,9 @@ fn iter_unique_values() {
         match value {
             Ok(_) => counter += 1,
             Err(_) => ()
+        }
+        if counter > 100 {
+            break;
         }
     }
     println!("number of unique values in log: {}", counter);

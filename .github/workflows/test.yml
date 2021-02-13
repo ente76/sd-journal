@@ -43,8 +43,6 @@ jobs:
       run: cargo build --verbose ${{ matrix.features }}
     - name: journal version
       run: journalctl --version
-    - name: journal open folder
-      run: SYSTEMD_LOG_LEVEL=debug journalctl --file=test-data/test.journal
     - name: run tests
       run: cargo test --verbose ${{ matrix.features }}
     - name: doc test
