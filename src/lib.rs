@@ -143,7 +143,9 @@ pub mod iterators;
 use chrono::{Duration, NaiveDateTime};
 pub use enums::{CursorMovement, Enumeration, Error, Event, FileFlags, Level, NamespaceFlags,
                 PathFlags, UserFlags};
-use iterators::{CursorIterator, CursorReverseIterator, FieldNames, Fields, UniqueValues};
+#[cfg(any(feature = "246", feature = "245", feature = "229"))]
+use iterators::FieldNames;
+use iterators::{CursorIterator, CursorReverseIterator, Fields, UniqueValues};
 use libc::{c_char, c_int, c_uchar, c_void, iovec, size_t};
 use sd_id128::ID128;
 use sd_sys::journal as ffi;
