@@ -21,9 +21,9 @@ jobs:
       matrix:
         include:
           - system: "ubuntu-20.04"
-            features: "--features \"240\""
+            features: ""
           - system: "ubuntu-18.04"
-            features: "--features \"233\""
+            features: ""
           - system: "ubuntu-16.04"
             features: ""
     
@@ -34,8 +34,8 @@ jobs:
     - name: install libsystemd
       run: sudo apt-get install -y libsystemd-dev
     - name: build
-      run: cargo build --verbose --no-default-features ${{ matrix.features }}
+      run: cargo build --verbose ${{ matrix.features }}
     - name: run tests
-      run: cargo test --verbose --no-default-features ${{ matrix.features }}
+      run: cargo test --verbose ${{ matrix.features }}
     - name: doc test
-      run: cargo doc --no-default-features ${{ matrix.features }}
+      run: cargo doc ${{ matrix.features }}
