@@ -194,11 +194,12 @@ fn previous() {
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.seek_tail().unwrap();
     // loop over a journal & print it's messages
+    let mut counter = 0;
     while let Ok(CursorMovement::Done) = journal.previous() {
         // do something on each cursor, e.g. print the MESSAGE
-        println!("{}", journal.get_data("MESSAGE").unwrap());
+        counter += 1;
     }
-
+    println!("looped over {} items", counter);
     // do a previous() after seek_head() to hit an EoF
     journal.seek_head().unwrap();
     // there is a [defect in libsystemd](https://github.com/systemd/systemd/issues/17662)
@@ -368,6 +369,7 @@ fn add_match() {
     // add a match for "MESSAGE=Hello World!" should succeed while a match for
     // "MESSAGE=Hello Woooooorld!" should not return any matches
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
+    journal.wait(10).unwrap();
     journal.add_match("MESSAGE=Hello World!").unwrap();
     assert_eq!(journal.next().unwrap(), CursorMovement::Done);
     while let Ok(CursorMovement::Done) = journal.next() {
@@ -550,6 +552,7 @@ fn process() {
     // TODO: do a test at all... calling process without a wait seems to return
     // random numbers
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
+    journal.wait(10).unwrap();
     journal.process().unwrap();
 }
 
