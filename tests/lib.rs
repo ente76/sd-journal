@@ -752,12 +752,24 @@ fn enumerate_unique_values() {
     // query MESSAGE field 3 times and assert each result differs
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.query_unique_values("MESSAGE").unwrap();
-    let first = journal.enumerate_unique_values().unwrap();
-    println!("first: {:?}", first);
-    let second = journal.enumerate_unique_values().unwrap();
-    println!("second: {:?}", second);
-    assert_eq!(first, Enumeration::Value("Hello World!".to_string()));
-    assert_eq!(second, Enumeration::EoF);
+    let mut results = Vec::new();
+    while true {
+        let value = journal.enumerate_unique_values().unwrap();
+        if value == Enumeration::EoF {
+            println!("reached EoF");
+            break;
+        }
+        if results.iter().any(|v| v == &value) {
+            println!("found duplicate: {:?}", value);
+            assert!(false);
+        }
+        results.push(value);
+    }
+    // let first = journal.enumerate_unique_values().unwrap();
+    // println!("first: {:?}", first);
+    // let second = journal.enumerate_unique_values().unwrap();
+    // println!("second: {:?}", second);
+    // assert!(first != second);
 }
 
 #[test]
