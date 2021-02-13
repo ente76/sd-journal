@@ -402,7 +402,7 @@ fn add_disjunction() {
     // add a match for "MESSAGE=Hello Woooooorld!" OR "_TRANSPORT=journal" should
     // find data (i.e. next() return Done)
     let journal = open_testdata();
-    journal.add_match(b"MESSAGE=Hello Woooooorld!").unwrap();
+    journal.add_match(b"MESSAGE=Hello World!").unwrap();
     journal.add_disjunction().unwrap();
     journal.add_match(b"_TRANSPORT=journal").unwrap();
     assert_eq!(journal.next().unwrap(), CursorMovement::Done);
