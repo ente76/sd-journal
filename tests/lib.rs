@@ -96,6 +96,7 @@ fn open() {
 }
 
 #[test]
+#[cfg(any(feature = "245", feature = "246"))]
 fn open_namespace() {
     // Open the journal for a namespace including the default namespace
     Journal::open_namespace("namespace",
@@ -473,6 +474,7 @@ fn get_treshold() {
 }
 
 #[test]
+#[cfg(any(feature = "246", feature = "245", feature = "229"))]
 fn enumerate_field_names() {
     // loop once through all fields an print them assuming no error is raised ever
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
@@ -485,6 +487,7 @@ fn enumerate_field_names() {
 }
 
 #[test]
+#[cfg(any(feature = "246", feature = "245", feature = "229"))]
 fn restart_fields() {
     // enumerate fields until "MESSAGE" is found
     // restart
@@ -566,12 +569,14 @@ fn wait() {
 }
 
 #[test]
+#[cfg(any(feature = "246", feature = "245", feature = "229"))]
 fn has_runtime_files() {
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.has_runtime_files().unwrap();
 }
 
 #[test]
+#[cfg(any(feature = "246", feature = "245", feature = "229"))]
 fn has_persistent_files() {
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.has_persistent_files().unwrap();
@@ -686,6 +691,7 @@ fn enumerate_fields() {
 }
 
 #[test]
+#[cfg(any(feature = "246"))]
 fn enumerate_available_fields() {
     // loop through all fields of a record and print them
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
@@ -756,6 +762,7 @@ fn enumerate_unique_values() {
 }
 
 #[test]
+#[cfg(any(feature = "246"))]
 fn enumerate_available_unique_values() {
     // query MESSAGE field 3 times and assert each result differs
     let journal = open_testdata();

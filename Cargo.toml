@@ -13,9 +13,13 @@ categories = ["os::linux-apis", "external-ffi-bindings", "api-bindings"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["experimental", "td_chrono"]
+default = ["experimental", "td_chrono", "246"]
 experimental = []
 td_chrono = ["chrono"]
+
+246 = []
+245 = []
+229 = []
 
 [dependencies]
 sd-sys = {version="1"}

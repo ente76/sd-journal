@@ -68,7 +68,7 @@
 //!
 //! ### Encoding
 //!
-//! Journald stores data as "FIELDNAME=field value". While field names are
+//! Journald stores data as `FIELDNAME=field value`. While field names are
 //! strict UTF-8 encoded and field value are usually encoded in UTF-8, field
 //! values may as well be in any encoding including binary data.
 //! This library allows logging to the journal in any encoding although using
@@ -321,6 +321,7 @@ impl Journal {
     /// - Ok(Journal): initialized journal
     /// - Err(Error::SDError): sd-journal returned an error code
     /// - Err(Error::NullError): the namespace contained a 0-byte
+    #[cfg(any(feature = "245", feature = "246"))]
     pub fn open_namespace<T: Into<Vec<u8>>>(namespace: T,
                                             namespace_flags: NamespaceFlags,
                                             file_flags: FileFlags,
@@ -672,7 +673,7 @@ impl Journal {
         Ok(CursorMovement::Done)
     }
 
-    /// **UNSTABLE API** Seek to the head of the journal (implements
+    /// Seek to the head of the journal (implements
     /// [`sd_journal_seek_head`](https://www.freedesktop.org/software/systemd/man/sd_journal_seek_head.html#)).
     ///
     /// Seek to the beginning of the journal, i.e. to the position **before**
@@ -702,18 +703,9 @@ impl Journal {
     /// operation is executed immediately after `seek_head()` before issuing any
     /// `previous()`. If done, `previous()`thereafter will correctly report EoF.
     ///
-    /// # Stability
-    /// Due to the issue described above, this method may be changed in future
-    /// to include a `next()` in future releases and thus position the cursor
-    /// rather **on** the first available entry rather than positioning the
-    /// cursor **before** the oldest available entry. Such change is likely and
-    /// will be based on the issue handling of the systemd team as well as on
-    /// user feedback.
-    ///
     /// # Return values
     /// - Ok(()): success
     /// - Err(Error::SDError): sd-journal returned an error code
-    #[cfg(feature = "experimental")]
     pub fn seek_head(&self) -> Result<(), Error> {
         let result = unsafe { ffi::sd_journal_seek_head(self.ffi) };
         if result < 0 {
@@ -722,7 +714,7 @@ impl Journal {
         Ok(())
     }
 
-    /// **UNSTABLE API** Seek to the tail of the journal (implements
+    /// Seek to the tail of the journal (implements
     /// [`sd_journal_seek_tail`](https://www.freedesktop.org/software/systemd/man/sd_journal_seek_head.html#)).
     ///
     /// Seek to the end of the journal, i.e. the position after the most recent
@@ -752,18 +744,9 @@ impl Journal {
     /// operation is executed immediately after `seek_head()` before issuing any
     /// `previous()`. If done, `previous()`thereafter will correctly report EoF.
     ///
-    /// # Stability
-    /// Due to the issue described above, this method may be changed in future
-    /// to include a `next()` in future releases and thus position the cursor
-    /// rather **on** the first available entry rather than positioning the
-    /// cursor **before** the oldest available entry. Such change is likely and
-    /// will be based on the issue handling of the systemd team as well as on
-    /// user feedback.
-    ///
     /// # Return values
     /// - Ok(()): success
     /// - Err(Error::SDError): sd-journal returned an error code
-    #[cfg(feature = "experimental")]
     pub fn seek_tail(&self) -> Result<(), Error> {
         let result = unsafe { ffi::sd_journal_seek_tail(self.ffi) };
         if result < 0 {
@@ -1067,6 +1050,7 @@ impl Journal {
     /// - Ok(Enumeration::EoF): no more fields
     /// - Ok(Enumeration::Value(String)): field name
     /// - Err(Error::SDError): sd-journal returned an error code
+    #[cfg(any(feature = "246", feature = "245", feature = "229"))]
     pub fn enumerate_field_names(&self) -> Result<Enumeration<String>, Error> {
         let mut field: *const c_char = ptr::null();
         let result = unsafe { ffi::sd_journal_enumerate_fields(self.ffi, &mut field) };
@@ -1085,6 +1069,7 @@ impl Journal {
 
     /// Restart field enumeration (implements
     /// [`sd_journal_restart_fields()`](https://www.freedesktop.org/software/systemd/man/sd_journal_enumerate_fields.html#)).
+    #[cfg(any(feature = "246", feature = "245", feature = "229"))]
     pub fn restart_field_name_enumeration(&self) {
         unsafe { ffi::sd_journal_restart_fields(self.ffi) }
     }
@@ -1190,6 +1175,7 @@ impl Journal {
     /// # Return Values
     /// - Ok(bool)
     /// - Err(Error::SDError): sd-journal returned an error code
+    #[cfg(any(feature = "246", feature = "245", feature = "229"))]
     pub fn has_runtime_files(&self) -> Result<bool, Error> {
         let result = unsafe { ffi::sd_journal_has_runtime_files(self.ffi) };
         if result < 0 {
@@ -1204,6 +1190,7 @@ impl Journal {
     /// # Return Values
     /// - Ok(bool)
     /// - Err(Error::SDError): sd-journal returned an error code
+    #[cfg(any(feature = "246", feature = "245", feature = "229"))]
     pub fn has_persistent_files(&self) -> Result<bool, Error> {
         let result = unsafe { ffi::sd_journal_has_persistent_files(self.ffi) };
         if result < 0 {
@@ -1212,7 +1199,7 @@ impl Journal {
         Ok(result > 0)
     }
 
-    /// **UNSTABLE API** Determines the disk space used by the journal in Bytes
+    /// Determines the disk space used by the journal in Bytes
     /// (implements [`sd_journal_get_usage()`](https://www.freedesktop.org/software/systemd/man/sd_journal_get_usage.html#)).
     ///
     /// # Stability
@@ -1222,7 +1209,6 @@ impl Journal {
     /// # Return Values
     /// - Ok(u64): space required in Bytes
     /// - Err(Error::SDError): sd-journal returned an error code
-    #[cfg(feature = "experimental")]
     pub fn get_usage(&self) -> Result<u64, Error> {
         let mut usage: u64 = 0;
         let result = unsafe { ffi::sd_journal_get_usage(self.ffi, &mut usage) };
@@ -1498,6 +1484,7 @@ impl Journal {
     ///   data in the format `FIELDNAME=field value`. Field name and value are
     ///   separated at the `=`. If the format does not match, this error is
     ///   raised.
+    #[cfg(any(feature = "246"))]
     pub fn enumerate_available_fields(&self) -> Result<Enumeration<(String, String)>, Error> {
         let mut data: *const c_void = ptr::null_mut();
         let mut length: size_t = 0;
@@ -1615,6 +1602,7 @@ impl Journal {
     /// - Ok(Enumeration::EoF): no more unique values to enumerate
     /// - Err(Error::UTF8Error): UTF-8 decoding error occured
     /// - Err(Error::SDError): sd-journal returned an error code
+    #[cfg(any(feature = "246"))]
     pub fn enumerate_available_unique_values(&self) -> Result<Enumeration<String>, Error> {
         let mut data: *const c_void = ptr::null_mut();
         let mut length: size_t = 0;
