@@ -377,6 +377,7 @@ fn seek_cursor_id() {
 
 #[test]
 fn add_match() {
+    Journal::log_message(Level::Info, "Hello World!").unwrap();
     // add a match for "MESSAGE=Hello World!" should succeed while a match for
     // "MESSAGE=Hello Woooooorld!" should not return any matches
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
@@ -397,6 +398,7 @@ fn add_match() {
 
 #[test]
 fn add_disjunction() {
+    Journal::log_message(Level::Info, "Hello World!").unwrap();
     // add a match for "MESSAGE=Hello Woooooorld!" OR "_TRANSPORT=journal" should
     // find data (i.e. next() return Done)
     let journal = open_testdata();

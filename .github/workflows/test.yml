@@ -41,6 +41,8 @@ jobs:
       run: sudo apt-get install -y libsystemd-dev
     - name: build
       run: cargo build --verbose ${{ matrix.features }}
+    - name: check folder structure
+      run: ls -laR
     - name: run tests
       run: cargo test --verbose ${{ matrix.features }}
     - name: doc test
