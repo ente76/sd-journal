@@ -409,6 +409,21 @@ fn add_disjunction() {
 }
 
 #[test]
+fn test_data() {
+    let journal = open_testdata();
+    journal.seek_head().unwrap();
+    let done: bool = false;
+    while !done {
+        if journal.next().unwrap() == CursorMovement::EoF {
+            println!("reached the end");
+            break;
+        }
+        let m = journal.get_data("MESSAGE").unwrap();
+        println!("{}", m);
+    }
+}
+
+#[test]
 fn add_conjunction() {
     // add a match for "MESSAGE=Hello Woooooorld!" AND "_TRANSPORT=journal" should
     // not find any record (i.e. next() return EoF)
