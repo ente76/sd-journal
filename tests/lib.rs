@@ -155,11 +155,7 @@ fn open_files() {
 
 #[test]
 fn next() {
-    let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    test_data.push("test-data/");
-    println!("looking for test data in folder {}", test_data.display());
-    let journal =
-        Journal::open_directory(&test_data, PathFlags::FullPath, UserFlags::AllUsers).unwrap();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     // loop over a journal & print it's messages
     while let Ok(CursorMovement::Done) = journal.next() {
         // do something on each cursor, e.g. print the MESSAGE
@@ -176,11 +172,7 @@ fn next() {
 
 #[test]
 fn iter() {
-    let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    test_data.push("test-data/");
-    println!("looking for test data in folder {}", test_data.display());
-    let journal =
-        Journal::open_directory(&test_data, PathFlags::FullPath, UserFlags::AllUsers).unwrap();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     // loop over a journal & print it's messages
     for cursor in journal.iter() {
         match cursor {
@@ -199,11 +191,7 @@ fn iter() {
 
 #[test]
 fn previous() {
-    let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    test_data.push("test-data/");
-    println!("looking for test data in folder {}", test_data.display());
-    let journal =
-        Journal::open_directory(&test_data, PathFlags::FullPath, UserFlags::AllUsers).unwrap();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.seek_tail().unwrap();
     // loop over a journal & print it's messages
     while let Ok(CursorMovement::Done) = journal.previous() {
@@ -222,11 +210,7 @@ fn previous() {
 
 #[test]
 fn iter_reverse() {
-    let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    test_data.push("test-data/");
-    println!("looking for test data in folder {}", test_data.display());
-    let journal =
-        Journal::open_directory(&test_data, PathFlags::FullPath, UserFlags::AllUsers).unwrap();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.seek_tail().unwrap();
     // loop over a journal & print it's messages
     for cursor in journal.iter_reverse() {
@@ -665,11 +649,7 @@ fn get_catalog() {
 fn get_data() {
     // get data for field "MESSAGE" and check the result actually contains
     // "MESSAGE="
-    let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    test_data.push("test-data/");
-    println!("looking for test data in folder {}", test_data.display());
-    let journal =
-        Journal::open_directory(&test_data, PathFlags::FullPath, UserFlags::AllUsers).unwrap();
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     for cursor in &journal {
         let cursor = cursor.unwrap();
         let message = cursor.get_data("MESSAGE")
