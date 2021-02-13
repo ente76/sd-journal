@@ -112,6 +112,7 @@ fn open_namespace() {
 }
 
 #[test]
+#[cfg(any(feature = "245", feature = "246"))]
 fn open_all_namespaces() {
     // open the journal for all namespaces
     let journal = Journal::open_all_namespaces(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
@@ -523,6 +524,7 @@ fn restart_fields() {
 }
 
 #[test]
+#[cfg(any(feature = "246", feature = "245", feature = "229"))]
 fn iter_field_names() {
     // loop once through all fields an print them assuming no error is raised ever
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();

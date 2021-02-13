@@ -352,6 +352,7 @@ impl Journal {
     /// # Return values
     /// - Ok(Journal): initialized journal
     /// - Err(Error::SDError): sd-journal returned an error code
+    #[cfg(any(feature = "245", feature = "246"))]
     pub fn open_all_namespaces(file_flags: FileFlags,
                                user_flags: UserFlags)
                                -> Result<Journal, Error> {
@@ -1087,6 +1088,7 @@ impl Journal {
     ///     println!("{}", fieldname.unwrap());
     /// }
     /// ```
+    #[cfg(any(feature = "246", feature = "245", feature = "229"))]
     pub fn iter_field_names<'a>(&'a self) -> FieldNames<'a> {
         FieldNames { journal: self }
     }
@@ -1692,6 +1694,7 @@ impl<'a> Cursor<'a> {
 
     /// see [Journal::enumerate_available_fields](Journal::
     /// enumerate_available_fields)
+    #[cfg(any(feature = "246"))]
     pub fn enumerate_available_fields(&self) -> Result<Enumeration<(String, String)>, Error> {
         self.journal.enumerate_available_fields()
     }
