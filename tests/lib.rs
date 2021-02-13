@@ -212,11 +212,21 @@ fn previous() {
 fn iter_reverse() {
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.seek_tail().unwrap();
-    // loop over a journal & print it's messages
+    // loop 100x over a journal & print it's messages
+    let mut counter = 0;
     for cursor in journal.iter_reverse() {
         match cursor {
-            Err(_) => break,
-            Ok(cursor) => println!("{}", cursor.get_data("MESSAGE").unwrap())
+            Err(_) => {
+                println!("failed to iterated 10 times");
+                assert!(false);
+            },
+            Ok(_) => {
+                counter += 1;
+                if counter > 10 {
+                    println!("successfully iterated 10 times");
+                    break;
+                }
+            }
         }
     }
     // ...
@@ -789,7 +799,9 @@ fn restart_unique_value_enumeration() {
 fn iter_unique_values() {
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     for value in journal.iter_unique_values("MESSAGE").unwrap() {
-        let value = value.unwrap();
-        println!("{}", value);
+        match value {
+            Ok(v) => println!("{}", v),
+            Err(_) => ()
+        }
     }
 }
