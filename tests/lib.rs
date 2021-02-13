@@ -1,7 +1,8 @@
 use chrono::Duration;
 use sd_id128::*;
 use sd_journal::*;
-use std::{ffi::CString,
+use std::{alloc::System,
+          ffi::CString,
           path::{Path, PathBuf}};
 
 // testing on sd-journal
@@ -371,10 +372,12 @@ fn add_disjunction() {
     // should find data (i.e. next() return Done)
     Journal::log_message(Level::Info, "Hello World!").unwrap();
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
+    println!("now {:?}", std::time::Instant::now());
     journal.wait(10).unwrap();
+    println!("now {:?}", std::time::Instant::now());
     journal.add_match("MESSAGE=Hello World!").unwrap();
     journal.add_disjunction().unwrap();
-    journal.add_match("MESSAGE=Hello Woooooooooorld!").unwrap();
+    journal.add_match("_TRANSPORT=Bus").unwrap();
     assert_eq!(journal.next().unwrap(), CursorMovement::Done);
 }
 
