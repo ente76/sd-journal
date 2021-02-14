@@ -797,18 +797,20 @@ fn enumerate_unique_values() {
     journal.query_unique_values("MESSAGE").unwrap();
     let mut results = Vec::new();
     loop {
-        match journal.enumerate_unique_values().unwrap() {
-            Enumeration::EoF => {
+        match journal.enumerate_unique_values() {
+            Ok(Enumeration::EoF) => {
                 println!("reached EoF");
                 break;
             }
-            Enumeration::Value(value) => {
+            Ok(Enumeration::Value(value)) => {
                 if results.iter().any(|v| v == &value) {
                     println!("found duplicate: {:?}", value);
                     assert!(false);
                 }
                 results.push(value);
             }
+            Err(sd_journal::Error::UTF8Error(_)) => (),
+            Err(_) => assert!(false),
         }
     }
 }
