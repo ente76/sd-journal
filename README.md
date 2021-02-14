@@ -21,16 +21,7 @@ This library is developed against the latest version of systemd. Unfortunately n
 
 All features are in the default feature set. If required, default-features must be turned off. Features are stacking: if you select feature 246, you will get 245 and 229 included.
 
-#### Planned Development
-
-- [ ] further rustification
-  - [ ] remove Cursor methods from Journal
-  - [ ] CursorMovement return Cursor instead of just a Done
-- [ ] additional trait implementation
-- [ ] Logger implementation
-- [ ] encoding support
-
-#### Encoding
+### Encoding
 
 Journald stores data as "FIELDNAME=field value". While field names are
 strict UTF-8 encoded and field value are usually encoded in UTF-8, field
@@ -79,6 +70,29 @@ while let Ok(CursorMovement::Done) = journal.next() {
     println!("{}", journal.get_data("MESSAGE").unwrap());
 }
 ```
+
+## Version History
+
+## Planned Development
+
+- [ ] further rustification
+  - [ ] remove Cursor methods from Journal
+  - [ ] CursorMovement return Cursor instead of just a Done
+- [ ] additional trait implementation
+- [ ] Logger implementation
+- [ ] encoding support
+
+## System Issues
+
+There are some weird issues with systemd. At first I thought I made some mistakes when wrapping functions. I implemented some of my tests in pure C, just to be sure. I reported issues to the systemd project. I am too small and unimportant to get someone working on the issues unless you point on the exact line in their source code, where they would have to fix something. Unfortunately I am not a C expert. I don't know how to debug libsystemd calls. A major issue is also: you won't be able to reproduce the errors easily.
+
+- `seek_head()` followed by `previous()` or `seek_tail()` followed by `next()`
+  - One can assume that `seek_head()` brings you to the head of the journal! Do not doubt! That is. One should just not assume that there is not a `previous()` item.
+  - `seek_head()` --> `previous()` succeeds
+    - the cursor will be on a valid item
+    - the number of items "before the beginning" is limited; the number seems to match the number of log files
+    - the items before the start of log are not in order
+  - `seek_head()` --> `next()` --> `previous()` works correctly (the last call returns a 0)
 
 ## License
 

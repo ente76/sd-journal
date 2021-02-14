@@ -43,5 +43,8 @@ jobs:
       run: cargo build --verbose ${{ matrix.features }}
     - name: run tests
       run: cargo test --verbose ${{ matrix.features }}
+      continue-on-error: true
+    - name: print journal
+      run: journalctl -n 100 --no-pager
     - name: doc test
       run: cargo doc ${{ matrix.features }}
