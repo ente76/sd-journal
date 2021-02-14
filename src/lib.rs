@@ -434,12 +434,6 @@ impl Journal {
     /// sdjournal_path.push("system.journal");
     /// println!("looking for sd-journal in {}", sdjournal_path.display());
     /// Journal::open_files([sdjournal_path]).unwrap();
-    /// // to open test data included in a project located in a folder
-    /// // "test-data" in the project root
-    /// let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    /// test_data.push("test-data/test.journal");
-    /// println!("looking for test data in folder {}", test_data.display());
-    /// Journal::open_files([test_data]).unwrap();
     /// ```
     ///
     /// # Return values
@@ -520,13 +514,9 @@ impl Journal {
     /// each `next()` and thus the cursor must be unwrapped first.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// # use sd_journal::*;
-    /// # use std::path::PathBuf;
-    /// # let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    /// # test_data.push("test-data/");
-    /// # println!("looking for test data in folder {}", test_data.display());
-    /// # let journal = Journal::open_directory(&test_data, PathFlags::FullPath, UserFlags::AllUsers).unwrap();
+    /// # let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     /// // loop over a journal & print it's messages
     /// for cursor in journal.iter() {
     ///     match cursor {
@@ -536,7 +526,7 @@ impl Journal {
     /// }
     /// // ...
     /// # journal.seek_head().unwrap();
-    /// let cursor = journal.iter_reverse().next().unwrap().unwrap();
+    /// let cursor = journal.iter().next().unwrap().unwrap();
     /// // the following two lines are actually return the same value
     /// let m1 = cursor.get_data("MESSAGE").unwrap();
     /// let m2 = journal.get_data("MESSAGE").unwrap();
@@ -596,13 +586,9 @@ impl Journal {
     /// # Examples
     /// ```
     /// # use sd_journal::*;
-    /// # use std::path::PathBuf;
-    /// # let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    /// # test_data.push("test-data/");
-    /// # println!("looking for test data in folder {}", test_data.display());
-    /// # let journal = Journal::open_directory(&test_data, PathFlags::FullPath, UserFlags::AllUsers).unwrap();
+    /// # let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     /// journal.seek_tail().unwrap();
-    /// // loop over a journal & print it's messages
+    /// // loop over a journal from the tail in reverse order & print it's messages
     /// for cursor in journal.iter_reverse() {
     ///     match cursor {
     ///         Err(_) => break,
