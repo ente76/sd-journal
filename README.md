@@ -17,6 +17,7 @@ This library is developed against the latest version of systemd. Unfortunately n
 
 - 246
 - 245
+- 230
 - 229
 
 All features are in the default feature set. If required, default-features must be turned off. Features are stacking: if you select feature 246, you will get 245 and 229 included.

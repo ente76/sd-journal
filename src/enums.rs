@@ -16,9 +16,11 @@
 
 use libc::c_int;
 use sd_sys::journal as ffi;
-use std::{ffi::{IntoStringError, NulError},
-          fmt,
-          str::Utf8Error};
+use std::{
+    ffi::{IntoStringError, NulError},
+    fmt,
+    str::Utf8Error,
+};
 
 /// Errors reported by Journal
 #[derive(Debug, PartialEq, Eq)]
@@ -29,7 +31,7 @@ pub enum Error {
     RangeError,
     StringError(IntoStringError),
     TimeStampOutOfRange,
-    UnexpectedDataFormat
+    UnexpectedDataFormat,
 }
 
 /// Log Level of a log entry according to syslog.h as used in the journal.
@@ -40,13 +42,13 @@ pub enum Error {
 #[derive(Debug, PartialEq, Eq)]
 pub enum Level {
     Emergency = ffi::LOG_EMERG as isize,
-    Alert     = ffi::LOG_ALERT as isize,
-    Critical  = ffi::LOG_CRIT as isize,
-    Error     = ffi::LOG_ERR as isize,
-    Warning   = ffi::LOG_WARNING as isize,
-    Notice    = ffi::LOG_NOTICE as isize,
-    Info      = ffi::LOG_INFO as isize,
-    Debug     = ffi::LOG_DEBUG as isize
+    Alert = ffi::LOG_ALERT as isize,
+    Critical = ffi::LOG_CRIT as isize,
+    Error = ffi::LOG_ERR as isize,
+    Warning = ffi::LOG_WARNING as isize,
+    Notice = ffi::LOG_NOTICE as isize,
+    Info = ffi::LOG_INFO as isize,
+    Debug = ffi::LOG_DEBUG as isize,
 }
 
 impl fmt::Display for Level {
@@ -67,7 +69,7 @@ impl Level {
             Level::Warning => "PRIORITY=4",
             Level::Notice => "PRIORITY=5",
             Level::Info => "PRIORITY=6",
-            Level::Debug => "PRIORITY=7"
+            Level::Debug => "PRIORITY=7",
         }
     }
 
@@ -82,7 +84,7 @@ impl Level {
             Level::Warning => "4",
             Level::Notice => "5",
             Level::Info => "6",
-            Level::Debug => "7"
+            Level::Debug => "7",
         }
     }
 }
@@ -100,44 +102,45 @@ impl Level {
 pub enum CursorMovement {
     Done,
     Limited(c_int),
-    EoF
+    EoF,
 }
 
 /// Return value for enumerations over fields, e.g. enumerate_data
 #[derive(Debug, PartialEq, Eq)]
 pub enum Enumeration<T> {
     Value(T),
-    EoF
+    EoF,
 }
 
 /// File related options for opening a journal
 #[derive(Debug, PartialEq, Eq)]
 pub enum FileFlags {
-    RuntimeOnly      = ffi::SD_JOURNAL_RUNTIME_ONLY as isize,
-    LocalOnly        = ffi::SD_JOURNAL_LOCAL_ONLY as isize,
+    RuntimeOnly = ffi::SD_JOURNAL_RUNTIME_ONLY as isize,
+    LocalOnly = ffi::SD_JOURNAL_LOCAL_ONLY as isize,
     LocalRuntimeOnly = (ffi::SD_JOURNAL_RUNTIME_ONLY | ffi::SD_JOURNAL_LOCAL_ONLY) as isize,
-    AllFiles         = 0
+    AllFiles = 0,
 }
 
 /// User related options for opening a journal
 #[derive(Debug, PartialEq, Eq)]
 pub enum UserFlags {
-    SystemOnly               = ffi::SD_JOURNAL_SYSTEM as isize,
-    CurrentUserOnly          = ffi::SD_JOURNAL_CURRENT_USER as isize,
+    SystemOnly = ffi::SD_JOURNAL_SYSTEM as isize,
+    CurrentUserOnly = ffi::SD_JOURNAL_CURRENT_USER as isize,
     CurrentUserAndSystemOnly = (ffi::SD_JOURNAL_SYSTEM | ffi::SD_JOURNAL_CURRENT_USER) as isize,
-    AllUsers                 = 0
+    AllUsers = 0,
 }
 
 /// Namespace related options for opening a journal
 pub enum NamespaceFlags {
-    SelectedNamespaceOnly    = 0,
-    DefaultNamespaceIncluded = ffi::SD_JOURNAL_INCLUDE_DEFAULT_NAMESPACE as isize
+    SelectedNamespaceOnly = 0,
+    DefaultNamespaceIncluded = ffi::SD_JOURNAL_INCLUDE_DEFAULT_NAMESPACE as isize,
 }
 
 /// Path related options for opening a journal
 pub enum PathFlags {
-    FullPath     = 0,
-    PathToOSRoot = ffi::SD_JOURNAL_OS_ROOT as isize
+    FullPath = 0,
+    #[cfg(any(feature = "246", feature = "245", feature = "230"))]
+    PathToOSRoot = ffi::SD_JOURNAL_OS_ROOT as isize,
 }
 
 /// Journal event types
@@ -145,5 +148,5 @@ pub enum PathFlags {
 pub enum Event {
     NOOP,
     Append,
-    Invalidate
+    Invalidate,
 }

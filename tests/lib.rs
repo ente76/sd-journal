@@ -131,6 +131,13 @@ fn open_all_namespaces() {
 
 #[test]
 fn open_directory() {
+    // fail on a non existing folder
+    Journal::open_directory("/", PathFlags::FullPath, UserFlags::AllUsers).unwrap_err();
+}
+
+#[test]
+#[cfg(any(feature = "246", feature = "245", feature = "230"))]
+fn open_directory_230() {
     // open the system journal by pointing to root with path flags set to
     // PathToOSRoot
     Journal::open_directory(
@@ -139,15 +146,13 @@ fn open_directory() {
         UserFlags::CurrentUserAndSystemOnly,
     )
     .unwrap();
-    // Journal::open_directory(Path::new("/"), PathFlags::PathToOSRoot, UserFlags::AllUsers).unwrap();
-    // Journal::open_directory(
-    //     PathBuf::from("/"),
-    //     PathFlags::PathToOSRoot,
-    //     UserFlags::AllUsers,
-    // )
-    // .unwrap();
-    // fail on a non existing folder
-    Journal::open_directory("/...", PathFlags::FullPath, UserFlags::AllUsers).unwrap_err();
+    Journal::open_directory(Path::new("/"), PathFlags::PathToOSRoot, UserFlags::AllUsers).unwrap();
+    Journal::open_directory(
+        PathBuf::from("/"),
+        PathFlags::PathToOSRoot,
+        UserFlags::AllUsers,
+    )
+    .unwrap();
 }
 
 #[test]
@@ -417,11 +422,14 @@ fn add_conjunction() {
     // add a match for "MESSAGE=Hello Woooooooooorld!" AND "MESSAGE=Hello World!"
     // should not find any data (i.e. next() returns EoF)
     Journal::log_message(Level::Info, "Hello World!").unwrap();
-    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
+    println!("now {:?}", std::time::Instant::now());
     std::thread::sleep(std::time::Duration::new(5, 0));
+    println!("now {:?}", std::time::Instant::now());
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
+    journal.seek_head().unwrap();
     journal.add_match("MESSAGE=Hello World!").unwrap();
-    journal.add_match("MESSAGE=Hello Woooooooooorld!").unwrap();
     journal.add_conjunction().unwrap();
+    journal.add_match("MESSAGE=Hello Woooooooooorld!").unwrap();
     assert_eq!(journal.next().unwrap(), CursorMovement::EoF);
 }
 
@@ -486,7 +494,7 @@ fn get_treshold() {
 }
 
 #[test]
-#[cfg(any(feature = "246", feature = "245", feature = "229"))]
+#[cfg(any(feature = "246", feature = "245", feature = "230", feature = "229"))]
 fn enumerate_field_names() {
     // loop once through all fields an print them assuming no error is raised ever
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
@@ -499,7 +507,7 @@ fn enumerate_field_names() {
 }
 
 #[test]
-#[cfg(any(feature = "246", feature = "245", feature = "229"))]
+#[cfg(any(feature = "246", feature = "245", feature = "230", feature = "229"))]
 fn restart_fields() {
     // enumerate fields until "MESSAGE" is found
     // restart
@@ -539,7 +547,7 @@ fn restart_fields() {
 }
 
 #[test]
-#[cfg(any(feature = "246", feature = "245", feature = "229"))]
+#[cfg(any(feature = "246", feature = "245", feature = "230", feature = "229"))]
 fn iter_field_names() {
     // loop once through all fields and print them assuming no error is raised ever
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
@@ -593,14 +601,14 @@ fn wait() {
 }
 
 #[test]
-#[cfg(any(feature = "246", feature = "245", feature = "229"))]
+#[cfg(any(feature = "246", feature = "245", feature = "230", feature = "229"))]
 fn has_runtime_files() {
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.has_runtime_files().unwrap();
 }
 
 #[test]
-#[cfg(any(feature = "246", feature = "245", feature = "229"))]
+#[cfg(any(feature = "246", feature = "245", feature = "230", feature = "229"))]
 fn has_persistent_files() {
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.has_persistent_files().unwrap();

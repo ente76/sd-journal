@@ -141,18 +141,22 @@ mod enums;
 pub mod iterators;
 
 use chrono::{Duration, NaiveDateTime};
-pub use enums::{CursorMovement, Enumeration, Error, Event, FileFlags, Level, NamespaceFlags,
-                PathFlags, UserFlags};
-#[cfg(any(feature = "246", feature = "245", feature = "229"))]
+pub use enums::{
+    CursorMovement, Enumeration, Error, Event, FileFlags, Level, NamespaceFlags, PathFlags,
+    UserFlags,
+};
+#[cfg(any(feature = "246", feature = "245", feature = "230", feature = "229"))]
 use iterators::FieldNames;
 use iterators::{CursorIterator, CursorReverseIterator, Fields, UniqueValues};
 use libc::{c_char, c_int, c_uchar, c_void, iovec, size_t};
 use sd_id128::ID128;
 use sd_sys::journal as ffi;
-use std::{ffi::{CStr, CString},
-          fmt::Debug,
-          path::PathBuf,
-          ptr};
+use std::{
+    ffi::{CStr, CString},
+    fmt::Debug,
+    path::PathBuf,
+    ptr,
+};
 
 /// A wrapper for sd-journal as offered by libsystemd based on FFI bindings
 /// offered in crate [sd-sys](https://gitlab.com/systemd.rs/sd-sys).
@@ -161,13 +165,13 @@ use std::{ffi::{CStr, CString},
 /// entries from the systemd journal.
 #[derive(Debug)]
 pub struct Journal {
-    ffi: *mut ffi::sd_journal
+    ffi: *mut ffi::sd_journal,
 }
 
 /// A journal entry record
 #[derive(Debug)]
 pub struct Cursor<'a> {
-    pub(crate) journal: &'a Journal
+    pub(crate) journal: &'a Journal,
 }
 
 impl Journal {
@@ -247,8 +251,10 @@ impl Journal {
         let mut iovec_vec: Vec<iovec> = Vec::new();
         for field in data {
             let field = field.as_ref();
-            iovec_vec.push(iovec { iov_base: field.as_ptr() as *mut c_void,
-                                   iov_len:  field.len() });
+            iovec_vec.push(iovec {
+                iov_base: field.as_ptr() as *mut c_void,
+                iov_len: field.len(),
+            });
         }
         let result = unsafe { ffi::sd_journal_sendv(iovec_vec.as_ptr(), iovec_vec.len() as c_int) };
         if result < 0 {
@@ -276,8 +282,8 @@ impl Journal {
             Err(error) => {
                 unsafe { libc::free(data as *mut c_void) };
                 Err(Error::UTF8Error(error))?
-            },
-            Ok(value) => value.to_owned()
+            }
+            Ok(value) => value.to_owned(),
         };
         unsafe { libc::free(data as *mut c_void) };
         Ok(catalog)
@@ -324,11 +330,12 @@ impl Journal {
     /// - Err(Error::SDError): sd-journal returned an error code
     /// - Err(Error::NullError): the namespace contained a 0-byte
     #[cfg(any(feature = "245", feature = "246"))]
-    pub fn open_namespace<T: Into<Vec<u8>>>(namespace: T,
-                                            namespace_flags: NamespaceFlags,
-                                            file_flags: FileFlags,
-                                            user_flags: UserFlags)
-                                            -> Result<Journal, Error> {
+    pub fn open_namespace<T: Into<Vec<u8>>>(
+        namespace: T,
+        namespace_flags: NamespaceFlags,
+        file_flags: FileFlags,
+        user_flags: UserFlags,
+    ) -> Result<Journal, Error> {
         let c_namespace = CString::new(namespace).map_err(Error::NullError)?;
         let mut pointer = ptr::null_mut() as *mut ffi::sd_journal;
         let flags = file_flags as c_int | user_flags as c_int | namespace_flags as c_int;
@@ -355,9 +362,10 @@ impl Journal {
     /// - Ok(Journal): initialized journal
     /// - Err(Error::SDError): sd-journal returned an error code
     #[cfg(any(feature = "245", feature = "246"))]
-    pub fn open_all_namespaces(file_flags: FileFlags,
-                               user_flags: UserFlags)
-                               -> Result<Journal, Error> {
+    pub fn open_all_namespaces(
+        file_flags: FileFlags,
+        user_flags: UserFlags,
+    ) -> Result<Journal, Error> {
         let mut pointer = ptr::null_mut() as *mut ffi::sd_journal;
         let flags = file_flags as c_int | user_flags as c_int | ffi::SD_JOURNAL_ALL_NAMESPACES;
         let result =
@@ -398,10 +406,11 @@ impl Journal {
     /// - Ok(Journal): initialized journal
     /// - Err(Error::SDError): sd-journal returned an error code
     /// - Err(Error::NullError): the path contains a 0-byte
-    pub fn open_directory<P: Into<PathBuf>>(path: P,
-                                            path_flags: PathFlags,
-                                            user_flags: UserFlags)
-                                            -> Result<Journal, Error> {
+    pub fn open_directory<P: Into<PathBuf>>(
+        path: P,
+        path_flags: PathFlags,
+        user_flags: UserFlags,
+    ) -> Result<Journal, Error> {
         #[cfg(unix)]
         use std::os::unix::ffi::OsStringExt;
         let c_path =
@@ -796,7 +805,7 @@ impl Journal {
         let usec: u64 = match clock_monotonic.num_microseconds() {
             None => Err(Error::TimeStampOutOfRange)?,
             Some(t) if t < 0 => Err(Error::TimeStampOutOfRange)?,
-            Some(t) => t as u64
+            Some(t) => t as u64,
         };
 
         let ffi_boot_id = boot_id.into_ffi();
@@ -820,7 +829,7 @@ impl Journal {
     /// - Err(Error::SDError): sd-journal returned an error code
     pub fn seek_realtime(&self, clock_realtime: NaiveDateTime) -> Result<(), Error> {
         let usec = clock_realtime.timestamp_subsec_micros() as u64
-                   + clock_realtime.timestamp() as u64 * 1_000_000;
+            + clock_realtime.timestamp() as u64 * 1_000_000;
         let result = unsafe { ffi::sd_journal_seek_realtime_usec(self.ffi, usec) };
         if result < 0 {
             return Err(Error::SDError(result));
@@ -925,10 +934,14 @@ impl Journal {
         if result < 0 {
             return Err(Error::SDError(result));
         }
-        let from = NaiveDateTime::from_timestamp((from_usec / 1_000_000) as i64,
-                                                 ((from_usec % 1_000_000) * 1_000) as u32);
-        let to = NaiveDateTime::from_timestamp((to_usec / 1_000_000) as i64,
-                                               ((to_usec % 1_000_000) * 1_000) as u32);
+        let from = NaiveDateTime::from_timestamp(
+            (from_usec / 1_000_000) as i64,
+            ((from_usec % 1_000_000) * 1_000) as u32,
+        );
+        let to = NaiveDateTime::from_timestamp(
+            (to_usec / 1_000_000) as i64,
+            ((to_usec % 1_000_000) * 1_000) as u32,
+        );
         Ok((from, to))
     }
 
@@ -943,18 +956,20 @@ impl Journal {
         let mut from_usec: u64 = 0;
         let mut to_usec: u64 = 0;
         let result = unsafe {
-            ffi::sd_journal_get_cutoff_monotonic_usec(self.ffi,
-                                                      boot_id.into_ffi(),
-                                                      &mut from_usec,
-                                                      &mut to_usec)
+            ffi::sd_journal_get_cutoff_monotonic_usec(
+                self.ffi,
+                boot_id.into_ffi(),
+                &mut from_usec,
+                &mut to_usec,
+            )
         };
         if result < 0 {
             return Err(Error::SDError(result));
         }
         let from = Duration::seconds((from_usec / 1_000_000) as i64)
-                   + Duration::microseconds((from_usec % 1_000_000) as i64);
+            + Duration::microseconds((from_usec % 1_000_000) as i64);
         let to = Duration::seconds((to_usec / 1_000_000) as i64)
-                 + Duration::microseconds((to_usec % 1_000_000) as i64);
+            + Duration::microseconds((to_usec % 1_000_000) as i64);
         Ok((from, to))
     }
 
@@ -998,7 +1013,7 @@ impl Journal {
     /// - Ok(Enumeration::EoF): no more fields
     /// - Ok(Enumeration::Value(String)): field name
     /// - Err(Error::SDError): sd-journal returned an error code
-    #[cfg(any(feature = "246", feature = "245", feature = "229"))]
+    #[cfg(any(feature = "246", feature = "245", feature = "230", feature = "229"))]
     pub fn enumerate_field_names(&self) -> Result<Enumeration<String>, Error> {
         let mut field: *const c_char = ptr::null();
         let result = unsafe { ffi::sd_journal_enumerate_fields(self.ffi, &mut field) };
@@ -1009,15 +1024,16 @@ impl Journal {
             return Ok(Enumeration::EoF);
         }
         Ok(Enumeration::Value(unsafe {
-            CStr::from_ptr(field).to_str()
-                                 .map_err(Error::UTF8Error)?
-                                 .to_owned()
+            CStr::from_ptr(field)
+                .to_str()
+                .map_err(Error::UTF8Error)?
+                .to_owned()
         }))
     }
 
     /// Restart field enumeration (implements
     /// [`sd_journal_restart_fields()`](https://www.freedesktop.org/software/systemd/man/sd_journal_enumerate_fields.html#)).
-    #[cfg(any(feature = "246", feature = "245", feature = "229"))]
+    #[cfg(any(feature = "246", feature = "245", feature = "230", feature = "229"))]
     pub fn restart_field_name_enumeration(&self) {
         unsafe { ffi::sd_journal_restart_fields(self.ffi) }
     }
@@ -1035,7 +1051,7 @@ impl Journal {
     ///     println!("{}", fieldname.unwrap());
     /// }
     /// ```
-    #[cfg(any(feature = "246", feature = "245", feature = "229"))]
+    #[cfg(any(feature = "246", feature = "245", feature = "230", feature = "229"))]
     pub fn iter_field_names<'a>(&'a self) -> FieldNames<'a> {
         FieldNames { journal: self }
     }
@@ -1096,7 +1112,7 @@ impl Journal {
             ffi::SD_JOURNAL_NOP => Ok(Event::NOOP),
             ffi::SD_JOURNAL_APPEND => Ok(Event::Append),
             ffi::SD_JOURNAL_INVALIDATE => Ok(Event::Invalidate),
-            _ => Err(Error::SDError(result))
+            _ => Err(Error::SDError(result)),
         }
     }
 
@@ -1114,7 +1130,7 @@ impl Journal {
             ffi::SD_JOURNAL_NOP => Ok(Event::NOOP),
             ffi::SD_JOURNAL_APPEND => Ok(Event::Append),
             ffi::SD_JOURNAL_INVALIDATE => Ok(Event::Invalidate),
-            _ => Err(Error::SDError(result))
+            _ => Err(Error::SDError(result)),
         }
     }
 
@@ -1124,7 +1140,7 @@ impl Journal {
     /// # Return Values
     /// - Ok(bool)
     /// - Err(Error::SDError): sd-journal returned an error code
-    #[cfg(any(feature = "246", feature = "245", feature = "229"))]
+    #[cfg(any(feature = "246", feature = "245", feature = "230", feature = "229"))]
     pub fn has_runtime_files(&self) -> Result<bool, Error> {
         let result = unsafe { ffi::sd_journal_has_runtime_files(self.ffi) };
         if result < 0 {
@@ -1139,7 +1155,7 @@ impl Journal {
     /// # Return Values
     /// - Ok(bool)
     /// - Err(Error::SDError): sd-journal returned an error code
-    #[cfg(any(feature = "246", feature = "245", feature = "229"))]
+    #[cfg(any(feature = "246", feature = "245", feature = "230", feature = "229"))]
     pub fn has_persistent_files(&self) -> Result<bool, Error> {
         let result = unsafe { ffi::sd_journal_has_persistent_files(self.ffi) };
         if result < 0 {
@@ -1179,8 +1195,10 @@ impl Journal {
         if result < 0 {
             return Err(Error::SDError(result));
         }
-        let dt = NaiveDateTime::from_timestamp((usec / 1_000_000) as i64,
-                                               ((usec % 1_000_000) * 1_000) as u32);
+        let dt = NaiveDateTime::from_timestamp(
+            (usec / 1_000_000) as i64,
+            ((usec % 1_000_000) * 1_000) as u32,
+        );
         Ok(dt)
     }
 
@@ -1200,7 +1218,7 @@ impl Journal {
             return Err(Error::SDError(result));
         }
         let duration = Duration::seconds((usec / 1_000_000) as i64)
-                       + Duration::microseconds((usec % 1_000_000) as i64);
+            + Duration::microseconds((usec % 1_000_000) as i64);
         Ok((duration, ID128::from_ffi(boot_id)))
     }
 
@@ -1224,8 +1242,8 @@ impl Journal {
             Err(error) => {
                 unsafe { libc::free(ptr as *mut c_void) };
                 Err(Error::UTF8Error(error))?
-            },
-            Ok(value) => value.to_owned()
+            }
+            Ok(value) => value.to_owned(),
         };
         unsafe { libc::free(ptr as *mut c_void) };
         Ok(cursor_id)
@@ -1264,8 +1282,8 @@ impl Journal {
             Err(error) => {
                 unsafe { libc::free(data as *mut c_void) };
                 Err(Error::UTF8Error(error))?
-            },
-            Ok(value) => value.to_owned()
+            }
+            Ok(value) => value.to_owned(),
         };
         unsafe { libc::free(data as *mut c_void) };
         Ok(catalog)
@@ -1319,8 +1337,9 @@ impl Journal {
             return Err(Error::SDError(result));
         }
         let result = unsafe {
-            CStr::from_ptr(data as *mut c_char).to_str()
-                                               .map_err(Error::UTF8Error)?
+            CStr::from_ptr(data as *mut c_char)
+                .to_str()
+                .map_err(Error::UTF8Error)?
         };
 
         let field = c_field.into_string().map_err(Error::StringError)?;
@@ -1328,8 +1347,8 @@ impl Journal {
             None => Err(Error::UnexpectedDataFormat)?,
             Some(value) => match value.strip_prefix('=') {
                 None => Err(Error::UnexpectedDataFormat)?,
-                Some(value) => value
-            }
+                Some(value) => value,
+            },
         };
         Ok(result.to_string())
     }
@@ -1371,17 +1390,18 @@ impl Journal {
             return Ok(Enumeration::EoF);
         }
         let result = unsafe {
-            CStr::from_ptr(data as *const c_char).to_str()
-                                                 .map_err(Error::UTF8Error)?
-                                                 .to_owned()
+            CStr::from_ptr(data as *const c_char)
+                .to_str()
+                .map_err(Error::UTF8Error)?
+                .to_owned()
         };
         let (field, value) = match result.find('=') {
             None => Err(Error::UnexpectedDataFormat)?,
-            Some(index) => result.split_at(index)
+            Some(index) => result.split_at(index),
         };
         let value = match value.strip_prefix('=') {
             None => Err(Error::UnexpectedDataFormat)?,
-            Some(value) => value
+            Some(value) => value,
         };
         Ok(Enumeration::Value((field.to_owned(), value.to_owned())))
     }
@@ -1414,17 +1434,18 @@ impl Journal {
             return Ok(Enumeration::EoF);
         }
         let result = unsafe {
-            CStr::from_ptr(data as *const c_char).to_str()
-                                                 .map_err(Error::UTF8Error)?
-                                                 .to_owned()
+            CStr::from_ptr(data as *const c_char)
+                .to_str()
+                .map_err(Error::UTF8Error)?
+                .to_owned()
         };
         let (field, value) = match result.find('=') {
             None => Err(Error::UnexpectedDataFormat)?,
-            Some(index) => result.split_at(index)
+            Some(index) => result.split_at(index),
         };
         let value = match value.strip_prefix('=') {
             None => Err(Error::UnexpectedDataFormat)?,
-            Some(value) => value
+            Some(value) => value,
         };
         Ok(Enumeration::Value((field.to_owned(), value.to_owned())))
     }
@@ -1497,12 +1518,13 @@ impl Journal {
             return Ok(Enumeration::EoF);
         }
         let result = unsafe {
-            CStr::from_ptr(data as *const c_char).to_str()
-                                                 .map_err(Error::UTF8Error)?
+            CStr::from_ptr(data as *const c_char)
+                .to_str()
+                .map_err(Error::UTF8Error)?
         };
         let index = match result.find('=') {
             None => Err(Error::UnexpectedDataFormat)?,
-            Some(index) => index
+            Some(index) => index,
         };
         let (_, result) = result.split_at(index + 1);
         Ok(Enumeration::Value(result.to_owned()))
@@ -1529,9 +1551,10 @@ impl Journal {
             return Ok(Enumeration::EoF);
         }
         Ok(Enumeration::Value(unsafe {
-            CStr::from_ptr(data as *const c_char).to_str()
-                                                 .map_err(Error::UTF8Error)?
-                                                 .to_string()
+            CStr::from_ptr(data as *const c_char)
+                .to_str()
+                .map_err(Error::UTF8Error)?
+                .to_string()
         }))
     }
 
@@ -1560,9 +1583,10 @@ impl Journal {
     /// # Return Values
     /// - Ok(UniqueValues)
     /// - Err(Error::SDError): sd-journal returned an error code
-    pub fn iter_unique_values<'a, S: Into<Vec<u8>>>(&'a self,
-                                                    field: S)
-                                                    -> Result<UniqueValues<'a>, Error> {
+    pub fn iter_unique_values<'a, S: Into<Vec<u8>>>(
+        &'a self,
+        field: S,
+    ) -> Result<UniqueValues<'a>, Error> {
         self.query_unique_values(field)?;
         Ok(UniqueValues { journal: &self })
     }
