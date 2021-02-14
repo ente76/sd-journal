@@ -25,7 +25,7 @@ jobs:
           - system: "ubuntu-20.04"
             features: "--no-default-features --features \"229\""
           - system: "ubuntu-20.04"
-            features: "--no-default-features 
+            features: "--no-default-features"
           - system: "ubuntu-18.04"
             features: "--no-default-features --features \"229\""
           - system: "ubuntu-18.04"
