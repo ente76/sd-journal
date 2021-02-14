@@ -132,7 +132,12 @@ fn open_all_namespaces() {
 #[test]
 fn open_directory() {
     // fail on a non existing folder
-    Journal::open_directory("/", PathFlags::FullPath, UserFlags::AllUsers).unwrap_err();
+    Journal::open_directory(
+        "/QWERTZQWERTY1234567890",
+        PathFlags::FullPath,
+        UserFlags::AllUsers,
+    )
+    .unwrap_err();
 }
 
 #[test]
