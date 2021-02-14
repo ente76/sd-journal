@@ -385,7 +385,7 @@ impl Journal {
     /// will be opened and interleaved automatically.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use sd_journal::*;
     /// use std::path::{Path, PathBuf};
     /// // open the system journal by pointing to root with path flags set to
@@ -406,6 +406,50 @@ impl Journal {
     /// - Ok(Journal): initialized journal
     /// - Err(Error::SDError): sd-journal returned an error code
     /// - Err(Error::NullError): the path contains a 0-byte
+    #[cfg(any(feature = "246", feature = "245", feature = "230"))]
+    pub fn open_directory<P: Into<PathBuf>>(
+        path: P,
+        path_flags: PathFlags,
+        user_flags: UserFlags,
+    ) -> Result<Journal, Error> {
+        #[cfg(unix)]
+        use std::os::unix::ffi::OsStringExt;
+        let c_path =
+            CString::new(path.into().into_os_string().into_vec()).map_err(Error::NullError)?;
+        let mut pointer = ptr::null_mut() as *mut ffi::sd_journal;
+        let flags = path_flags as c_int | user_flags as c_int;
+        let result =
+            unsafe { ffi::sd_journal_open_directory(&mut pointer, c_path.as_ptr(), flags) };
+        if result < 0 {
+            return Err(Error::SDError(result));
+        }
+        let journal = Journal { ffi: pointer };
+        Ok(journal)
+    }
+
+    /// Open the journal located at a specific path (implements
+    /// [`sd_journal_open_directory()`](https://www.freedesktop.org/software/systemd/man/sd_journal_open.html#)).
+    ///
+    /// Open the journal located at a specific path: takes an *absolute*
+    /// directory path as argument. All journal files in this directory
+    /// will be opened and interleaved automatically.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use sd_journal::*;
+    /// use std::path::{Path, PathBuf};
+    /// // open test data included in a project located in a folder "test-data" in the
+    /// // project root
+    /// let mut test_data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    /// test_data.push("test-data/");
+    /// println!("looking for test data in folder {}", test_data.display());
+    /// Journal::open_directory(test_data, PathFlags::FullPath, UserFlags::AllUsers).unwrap();
+    /// ```
+    /// # Return values
+    /// - Ok(Journal): initialized journal
+    /// - Err(Error::SDError): sd-journal returned an error code
+    /// - Err(Error::NullError): the path contains a 0-byte
+    #[cfg(not(any(feature = "246", feature = "245", feature = "230")))]
     pub fn open_directory<P: Into<PathBuf>>(
         path: P,
         path_flags: PathFlags,
@@ -442,6 +486,7 @@ impl Journal {
     /// sdjournal_path.push(&machine_id);
     /// sdjournal_path.push("system.journal");
     /// println!("looking for sd-journal in {}", sdjournal_path.display());
+    /// # if !sdjournal_path.exists() { return; }
     /// Journal::open_files([sdjournal_path]).unwrap();
     /// ```
     ///

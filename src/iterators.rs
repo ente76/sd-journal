@@ -17,28 +17,28 @@ use super::*;
 
 /// Iterator over entries in the journal
 pub struct CursorIterator<'a> {
-    pub(crate) journal: &'a Journal
+    pub(crate) journal: &'a Journal,
 }
 
 /// Iterator over entries in the journal in reverse order
 pub struct CursorReverseIterator<'a> {
-    pub(crate) journal: &'a Journal
+    pub(crate) journal: &'a Journal,
 }
 
 /// Iterator over the fields of a journal entry record
 pub struct Fields<'a> {
-    pub(crate) journal: &'a Journal
+    pub(crate) journal: &'a Journal,
 }
 
 /// Iterator over the field names of the journal
-#[cfg(any(feature = "246", feature = "245", feature = "229"))]
+#[cfg(any(feature = "246", feature = "245", feature = "230", feature = "229"))]
 pub struct FieldNames<'a> {
-    pub(crate) journal: &'a Journal
+    pub(crate) journal: &'a Journal,
 }
 
 /// Iterator over unique values assigned to a field in the journal
 pub struct UniqueValues<'a> {
-    pub(crate) journal: &'a Journal
+    pub(crate) journal: &'a Journal,
 }
 
 impl<'a> Iterator for CursorIterator<'a> {
@@ -47,9 +47,13 @@ impl<'a> Iterator for CursorIterator<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         match self.journal.next() {
             Ok(CursorMovement::EoF) => None,
-            Ok(CursorMovement::Done) => Some(Ok(Cursor { journal: self.journal })),
-            Ok(CursorMovement::Limited(_)) => Some(Ok(Cursor { journal: self.journal })),
-            Err(e) => Some(Err(e))
+            Ok(CursorMovement::Done) => Some(Ok(Cursor {
+                journal: self.journal,
+            })),
+            Ok(CursorMovement::Limited(_)) => Some(Ok(Cursor {
+                journal: self.journal,
+            })),
+            Err(e) => Some(Err(e)),
         }
     }
 }
@@ -60,9 +64,13 @@ impl<'a> Iterator for CursorReverseIterator<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         match self.journal.previous() {
             Ok(CursorMovement::EoF) => None,
-            Ok(CursorMovement::Done) => Some(Ok(Cursor { journal: self.journal })),
-            Ok(CursorMovement::Limited(_)) => Some(Ok(Cursor { journal: self.journal })),
-            Err(e) => Some(Err(e))
+            Ok(CursorMovement::Done) => Some(Ok(Cursor {
+                journal: self.journal,
+            })),
+            Ok(CursorMovement::Limited(_)) => Some(Ok(Cursor {
+                journal: self.journal,
+            })),
+            Err(e) => Some(Err(e)),
         }
     }
 }
@@ -81,7 +89,9 @@ impl<'a> IntoIterator for Cursor<'a> {
     type Item = Result<(String, String), Error>;
 
     fn into_iter(self) -> Self::IntoIter {
-        Fields { journal: self.journal }
+        Fields {
+            journal: self.journal,
+        }
     }
 }
 
@@ -92,7 +102,7 @@ impl<'a> Iterator for Fields<'a> {
         match self.journal.enumerate_fields() {
             Ok(Enumeration::EoF) => None,
             Ok(Enumeration::Value(v)) => Some(Ok(v)),
-            Err(e) => Some(Err(e))
+            Err(e) => Some(Err(e)),
         }
     }
 }
@@ -104,12 +114,12 @@ impl<'a> Iterator for UniqueValues<'a> {
         match self.journal.enumerate_unique_values() {
             Ok(Enumeration::EoF) => None,
             Ok(Enumeration::Value(value)) => Some(Ok(value)),
-            Err(e) => Some(Err(e))
+            Err(e) => Some(Err(e)),
         }
     }
 }
 
-#[cfg(any(feature = "246", feature = "245", feature = "229"))]
+#[cfg(any(feature = "246", feature = "245", feature = "230", feature = "229"))]
 impl<'a> Iterator for FieldNames<'a> {
     type Item = Result<String, Error>;
 
@@ -117,7 +127,7 @@ impl<'a> Iterator for FieldNames<'a> {
         match self.journal.enumerate_field_names() {
             Ok(Enumeration::EoF) => None,
             Ok(Enumeration::Value(v)) => Some(Ok(v)),
-            Err(e) => Some(Err(e))
+            Err(e) => Some(Err(e)),
         }
     }
 }

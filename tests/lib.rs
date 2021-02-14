@@ -263,8 +263,8 @@ fn next_skip() {
     // which requires you to do a previous() after seek_tail() in order to get
     // to the expected position
     journal.previous().unwrap();
-    journal.previous_skip(5).unwrap();
-    assert_eq!(journal.next_skip(10).unwrap(), CursorMovement::Limited(5));
+    journal.previous_skip(15).unwrap();
+    assert_eq!(journal.next_skip(5).unwrap(), CursorMovement::Done);
 }
 
 #[test]
