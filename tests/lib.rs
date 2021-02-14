@@ -133,11 +133,19 @@ fn open_all_namespaces() {
 fn open_directory() {
     // open the system journal by pointing to root with path flags set to
     // PathToOSRoot
-    // Journal::open_directory("/", PathFlags::PathToOSRoot, UserFlags::AllUsers).unwrap();
+    Journal::open_directory(
+        "/",
+        PathFlags::PathToOSRoot,
+        UserFlags::CurrentUserAndSystemOnly,
+    )
+    .unwrap();
     // Journal::open_directory(Path::new("/"), PathFlags::PathToOSRoot, UserFlags::AllUsers).unwrap();
-    // Journal::open_directory(PathBuf::from("/"),
-    //                         PathFlags::PathToOSRoot,
-    //                         UserFlags::AllUsers).unwrap();
+    // Journal::open_directory(
+    //     PathBuf::from("/"),
+    //     PathFlags::PathToOSRoot,
+    //     UserFlags::AllUsers,
+    // )
+    // .unwrap();
     // fail on a non existing folder
     Journal::open_directory("/...", PathFlags::FullPath, UserFlags::AllUsers).unwrap_err();
 }
@@ -391,14 +399,17 @@ fn add_disjunction() {
     // add a match for "MESSAGE=Hello Woooooooooorld!" OR "MESSAGE=Hello World!"
     // should find data (i.e. next() return Done)
     Journal::log_message(Level::Info, "Hello World!").unwrap();
-    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     println!("now {:?}", std::time::Instant::now());
     std::thread::sleep(std::time::Duration::new(5, 0));
     println!("now {:?}", std::time::Instant::now());
+    let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
+    journal.seek_head().unwrap();
     journal.add_match("MESSAGE=Hello World!").unwrap();
-    // journal.add_disjunction().unwrap();
-    // journal.add_match("_TRANSPORT=Bus").unwrap();
+    journal.add_disjunction().unwrap();
+    journal.add_match("_TRANSPORT=QWERTZQWERTY").unwrap();
     assert_eq!(journal.next().unwrap(), CursorMovement::Done);
+    println!("{}", journal.get_data("MESSAGE").unwrap());
+    println!("{:?}", journal.get_realtime());
 }
 
 #[test]
@@ -409,8 +420,8 @@ fn add_conjunction() {
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     std::thread::sleep(std::time::Duration::new(5, 0));
     journal.add_match("MESSAGE=Hello World!").unwrap();
-    journal.add_conjunction().unwrap();
     journal.add_match("MESSAGE=Hello Woooooooooorld!").unwrap();
+    journal.add_conjunction().unwrap();
     assert_eq!(journal.next().unwrap(), CursorMovement::EoF);
 }
 
