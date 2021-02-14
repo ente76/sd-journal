@@ -1,8 +1,7 @@
 use chrono::Duration;
 use sd_id128::*;
 use sd_journal::*;
-use std::{alloc::System,
-          ffi::CString,
+use std::{ffi::CString,
           path::{Path, PathBuf}};
 
 // testing on sd-journal
@@ -739,22 +738,20 @@ fn enumerate_unique_values() {
     journal.query_unique_values("MESSAGE").unwrap();
     let mut results = Vec::new();
     loop {
-        let value = journal.enumerate_unique_values().unwrap();
-        if value == Enumeration::EoF {
-            println!("reached EoF");
-            break;
+        match journal.enumerate_unique_values().unwrap() {
+            Enumeration::EoF => {
+                println!("reached EoF");
+                break;
+            },
+            Enumeration::Value(value) => {
+                if results.iter().any(|v| v == &value) {
+                    println!("found duplicate: {:?}", value);
+                    assert!(false);
+                }
+                results.push(value);
+            }
         }
-        if results.iter().any(|v| v == &value) {
-            println!("found duplicate: {:?}", value);
-            assert!(false);
-        }
-        results.push(value);
     }
-    // let first = journal.enumerate_unique_values().unwrap();
-    // println!("first: {:?}", first);
-    // let second = journal.enumerate_unique_values().unwrap();
-    // println!("second: {:?}", second);
-    // assert!(first != second);
 }
 
 #[test]
@@ -763,12 +760,22 @@ fn enumerate_available_unique_values() {
     // query MESSAGE field 3 times and assert each result differs
     let journal = Journal::open(FileFlags::AllFiles, UserFlags::AllUsers).unwrap();
     journal.query_unique_values("MESSAGE").unwrap();
-    let first = journal.enumerate_unique_values().unwrap();
-    println!("first: {:?}", first);
-    let second = journal.enumerate_unique_values().unwrap();
-    println!("second: {:?}", second);
-    assert_eq!(first, Enumeration::Value("Hello World!".to_string()));
-    assert_eq!(second, Enumeration::EoF);
+    let mut results = Vec::new();
+    loop {
+        match journal.enumerate_available_unique_values().unwrap() {
+            Enumeration::EoF => {
+                println!("reached EoF");
+                break;
+            },
+            Enumeration::Value(value) => {
+                if results.iter().any(|v| v == &value) {
+                    println!("found duplicate: {:?}", value);
+                    assert!(false);
+                }
+                results.push(value);
+            }
+        }
+    }
 }
 
 #[test]

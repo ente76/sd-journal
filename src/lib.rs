@@ -758,8 +758,8 @@ impl Journal {
         Ok(())
     }
 
-    /// **UNSTABLE API** Seek to a monotonic timestamp of a certain boot id
-    /// (implements [`sd_journal_seek_monotonic_usec()`](https://www.freedesktop.org/software/systemd/man/sd_journal_seek_head.html#)).
+    /// Seek to a monotonic timestamp of a certain boot id (implements
+    /// [`sd_journal_seek_monotonic_usec()`](https://www.freedesktop.org/software/systemd/man/sd_journal_seek_head.html#)).
     ///
     /// Seek to a position with the specified monotonic timestamp, i.e.
     /// `clockMonotonic'. Since monotonic time restarts on every reboot a
@@ -796,21 +796,12 @@ impl Journal {
     /// [issue](https://github.com/systemd/systemd/issues/17763) has been
     /// reported to the systemd project.
     ///
-    /// # Stability
-    /// This method expects `chrono::Duration` in the same way as
-    /// `get_monotonic()` for the same reasons: `get_realtime()` refers to
-    /// `chrono::NaiveDateTime`. In future releases this method may be changed
-    /// to microsenconds (u128) or std::time::Duration. Such change is
-    /// reasonable likely and will be made based on user feedback.
-    ///
     /// # Return values
     /// - Ok(())
     /// - Err(Error::SDError): sd-journal returned an error code
     /// - Err(Error::TimeStampOutOfRange): the `clock_monotonic` time stamp
     ///   either reflects a negative duration or the duration exceeds i64
     ///   microseconds
-    #[cfg(feature = "td_chrono")]
-    #[cfg(feature = "experimental")]
     pub fn seek_monotonic(&self, boot_id: ID128, clock_monotonic: Duration) -> Result<(), Error> {
         // let usec = clock_monotonic.to_std()
         //                           .map_err(|_| Error::TimeStampOutOfRange)?
@@ -830,7 +821,7 @@ impl Journal {
         Ok(())
     }
 
-    /// **UNSTABLE API** Seek to realtime timestamp (implements
+    /// Seek to realtime timestamp (implements
     /// [`sd_journal_seek_realtime_usec()`](https://www.freedesktop.org/software/systemd/man/sd_journal_seek_head.html#)).
     ///
     /// Seeks to a position with the specified realtime (wallclock) timestamp,
@@ -838,17 +829,9 @@ impl Journal {
     /// monotonic. If a realtime timestamp is ambiguous, it is not defined which
     /// position is sought to.
     ///
-    /// # Stability
-    /// Currently the function expects a chrono::NaiveDateTime. In future
-    /// releases this method may be changed to expect microseconds (u128) or
-    /// std::time::Duration although this is very unlikely. Changes will be
-    /// made based on user feedback.
-    ///
     /// # Return values
     /// - Ok(())
     /// - Err(Error::SDError): sd-journal returned an error code
-    #[cfg(feature = "td_chrono")]
-    #[cfg(feature = "experimental")]
     pub fn seek_realtime(&self, clock_realtime: NaiveDateTime) -> Result<(), Error> {
         let usec = clock_realtime.timestamp_subsec_micros() as u64
                    + clock_realtime.timestamp() as u64 * 1_000_000;
@@ -859,18 +842,13 @@ impl Journal {
         Ok(())
     }
 
-    /// **UNSTABLE API** Seeks the journal to the position of the cursor
-    /// provided (implements [`sd_journal_seek_cursor()`](https://www.freedesktop.org/software/systemd/man/sd_journal_seek_head.html#)).
-    ///
-    /// # Stability
-    /// See [`get_cursor_id()`](get_cursor_id) for reasons why there is a small
-    /// chance this method may be adjusted in future releases.
+    /// Seeks the journal to the position of the cursor provided (implements
+    /// [`sd_journal_seek_cursor()`](https://www.freedesktop.org/software/systemd/man/sd_journal_seek_head.html#)).
     ///
     /// # Return Values
     /// - Ok(())
     /// - Err(Error::SDError): sd-journal returned an error code
     /// - Err(Error::NullError): a file path contains a 0-byte
-    #[cfg(feature = "experimental")]
     pub fn seek_cursor_id(&self, cursor_id: String) -> Result<(), Error> {
         let c_cursor = CString::new(cursor_id).map_err(Error::NullError)?;
         let result = unsafe { ffi::sd_journal_seek_cursor(self.ffi, c_cursor.as_ptr()) };
@@ -945,22 +923,13 @@ impl Journal {
         unsafe { ffi::sd_journal_flush_matches(self.ffi) }
     }
 
-    /// **UNSTABLE API** Determines the timestamps of the first and last entry
-    /// in journal (implements [`sd_journal_get_cutoff_realtime_usec`](https://www.freedesktop.org/software/systemd/man/sd_journal_get_cutoff_realtime_usec.html#)).
-    ///
-    /// # Stability
-    /// Currently the function returns a chrono::NaiveDateTime calculated from
-    /// the microseconds since EPOCH returned by the wrapped libsystemd
-    /// function. In future releases this method may be changed to return
-    /// microseconds (u128) or std::time::Duration although this is very
-    /// unlikely. Changes will be made based on user feedback.
+    /// Determines the timestamps of the first and last entry in journal
+    /// (implements [`sd_journal_get_cutoff_realtime_usec`](https://www.freedesktop.org/software/systemd/man/sd_journal_get_cutoff_realtime_usec.html#)).
     ///
     /// # Return Values:
     /// - Ok((NaiveDateTime, NaiveDateTime)): (from, to) timestamps of the
     ///   journal
     /// - Err(Error::SDError): sd-journal returned an error code
-    #[cfg(feature = "td_chrono")]
-    #[cfg(feature = "experimental")]
     pub fn get_realtime_cutoff(&self) -> Result<(NaiveDateTime, NaiveDateTime), Error> {
         let mut from_usec: u64 = 0;
         let mut to_usec: u64 = 0;
@@ -977,23 +946,13 @@ impl Journal {
         Ok((from, to))
     }
 
-    /// **UNSTABLE API** Determines the duration since boot of the first and
-    /// last entry in journal for a specific boot id (implements
+    /// Determines the duration since boot of the first and last entry in
+    /// journal for a specific boot id (implements
     /// [`sd_journal_get_cutoff_realtime_usec()`](https://www.freedesktop.org/software/systemd/man/sd_journal_get_cutoff_monotonic_usec.html#)).
-    ///
-    /// # Stability
-    /// Currently the function returns a chrono::Duration calculated from the
-    /// microseconds since boot returned by the wrapped libsystemd function. The
-    /// choice for chrono::Duration has been made based on the return value for
-    /// `get_realtime()`. In future releases this method may be changed to
-    /// microsenconds (u128) or std::time::Duration. Such change is reasonable
-    /// likely and will be made based on user feedback.
     ///
     /// # Return Values
     /// - Ok((Duration, Duration)): (from, to) respective duration since boot
     /// - Err(Error::SDError): sd-journal returned an error code
-    #[cfg(feature = "td_chrono")]
-    #[cfg(feature = "experimental")]
     pub fn get_monotonic_cutoff(&self, boot_id: ID128) -> Result<(Duration, Duration), Error> {
         let mut from_usec: u64 = 0;
         let mut to_usec: u64 = 0;
@@ -1222,22 +1181,12 @@ impl Journal {
         Ok(usage)
     }
 
-    /// **UNSTABLE API** Retrieves the realtime timestamp as
-    /// chrono::NaiveDateTime of the current record (implements
-    /// [`sd_journal_get_realtime_usec()`](https://www.freedesktop.org/software/systemd/man/sd_journal_get_realtime_usec.html#)).
-    ///
-    /// # Stability
-    /// Currently the function returns a chrono::NaiveDateTime calculated from
-    /// the microseconds since EPOCH returned by the wrapped libsystemd
-    /// function. In future releases this method may be changed to return
-    /// microseconds (u128) or std::time::Duration although this is very
-    /// unlikely. Changes will be made based on user feedback.
+    /// Retrieves the realtime timestamp as chrono::NaiveDateTime of the current
+    /// record (implements [`sd_journal_get_realtime_usec()`](https://www.freedesktop.org/software/systemd/man/sd_journal_get_realtime_usec.html#)).
     ///
     /// # Return Values:
     /// - Ok(NaiveDateTime): realtime timestamp of current record
     /// - Err(Error::SDError): sd-journal returned an error code
-    #[cfg(feature = "td_chrono")]
-    #[cfg(feature = "experimental")]
     pub fn get_realtime(&self) -> Result<NaiveDateTime, Error> {
         let mut usec: u64 = 0;
         let result = unsafe { ffi::sd_journal_get_realtime_usec(self.ffi, &mut usec) };
@@ -1249,23 +1198,13 @@ impl Journal {
         Ok(dt)
     }
 
-    /// **UNSTABLE API** Retrieves the monotonic timestamp of the current record
-    /// altogether with it's boot id (implements [`sd_journal_get_monotonic_usec()`](https://www.freedesktop.org/software/systemd/man/sd_journal_get_realtime_usec.html#)).
-    ///
-    /// # Stability
-    /// Currently the function returns a chrono::Duration calculated from the
-    /// microseconds since boot returned by the wrapped libsystemd function. The
-    /// choice for chrono::Duration has been made based on the return value for
-    /// `get_realtime()`. In future releases this method may be changed to
-    /// microsenconds (u128) or std::time::Duration. Such change is reasonable
-    /// likely and will be made based on user feedback.
+    /// Retrieves the monotonic timestamp of the current record altogether with
+    /// it's boot id (implements [`sd_journal_get_monotonic_usec()`](https://www.freedesktop.org/software/systemd/man/sd_journal_get_realtime_usec.html#)).
     ///
     /// # Return Values
     /// - Ok(chrono::Duration, ID128): tuple of a monotonic timestamp since boot
     ///   and boot id
     /// - Err(Error::SDError): sd-journal returned an error code
-    #[cfg(feature = "td_chrono")]
-    #[cfg(feature = "experimental")]
     pub fn get_monotonic(&self) -> Result<(Duration, sd_id128::ID128), Error> {
         let mut usec: u64 = 0;
         let mut boot_id = ID128::default().into_ffi();
@@ -1279,17 +1218,8 @@ impl Journal {
         Ok((duration, ID128::from_ffi(boot_id)))
     }
 
-    /// **UNSTABLE API** Retrieve a text representation of the cursor
+    /// Retrieve a text representation of the cursor
     /// (implements [`sd_journal_get_cursor()`](https://www.freedesktop.org/software/systemd/man/sd_journal_get_cursor.html#)).
-    ///
-    /// # Stability
-    /// `sd_journal_get_cursor()` returns a ownership of a memory location.
-    /// Currently the content is copied into a rustified String and the memory
-    /// freed immediately. In future releases a new data type could be defined
-    /// which avoids the immediate conversion into a String. The new data type
-    /// could be handed over into `seek_cursor()`. The chance for such change is
-    /// low. The decission will be taken based on typical usage scenarios and
-    /// user feedback.
     ///
     /// # Return values
     /// - Ok(String): cursor representation of sd-journal
@@ -1297,7 +1227,6 @@ impl Journal {
     /// - Err(Error::UTF8Error): UTF-8 decoding error occured; although this
     ///   should never happen since the journal internal cursor id is stored in
     ///   valid UTF-8
-    #[cfg(feature = "experimental")]
     pub fn get_cursor_id(&self) -> Result<String, Error> {
         let mut ptr: *mut c_char = ptr::null_mut();
         let result = unsafe { ffi::sd_journal_get_cursor(self.ffi, &mut ptr) };
@@ -1316,17 +1245,12 @@ impl Journal {
         Ok(cursor_id)
     }
 
-    /// **UNSTABLE API** Checks whether the current journal position matches a
+    /// Checks whether the current journal position matches a
     /// cursor id (implements [`sd_journal_get_cursor`](https://www.freedesktop.org/software/systemd/man/sd_journal_get_cursor.html#)).
-    ///
-    /// # Stability
-    /// See [`get_cursor_id()`](get_cursor_id) for reasons why there is a small
-    /// chance this method may be adjusted in future releases.
     ///
     /// # Return Values
     /// - Ok(bool)
     /// - Err(Error::SDError): sd-journal returned an error code
-    #[cfg(feature = "experimental")]
     pub fn cursor_id_matches<S: Into<Vec<u8>>>(&self, cursor_id: S) -> Result<bool, Error> {
         let c_cursor = CString::new(cursor_id).map_err(Error::NullError)?;
         let result = unsafe { ffi::sd_journal_test_cursor(self.ffi, c_cursor.as_ptr()) };
@@ -1621,7 +1545,7 @@ impl Journal {
         Ok(Enumeration::Value(unsafe {
             CStr::from_ptr(data as *const c_char).to_str()
                                                  .map_err(Error::UTF8Error)?
-                                                 .to_owned()
+                                                 .to_string()
         }))
     }
 

@@ -21,10 +21,6 @@ This library is developed against the latest version of systemd. Unfortunately n
 
 All features are in the default feature set. If required, default-features must be turned off. Features are stacking: if you select feature 246, you will get 245 and 229 included.
 
-### Status & Stability
-
-This library is still under development. There are various methods marked with the feature "experimental". These methods are not considered finalized yet. The documentation of each of these methods contains further information. Additionally the library structure is currently under investigation. Currently all methods are implemented for struct Journal. This may change soon: methods that refer to a single record may be moved to struct Cursor and methods performing cursor movements (next(), previous() and similar ones) will return a Cursor.
-
 #### Planned Development
 
 - [ ] further rustification
